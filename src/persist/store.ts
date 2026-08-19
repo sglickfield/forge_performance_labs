@@ -1,4 +1,5 @@
 import { analyzeAthlete, sessionPullsFrom } from '../domain/analyze'
+import { normalizeDraft } from '../domain/reportSchema'
 import type { Analysis, AthleteExport, AthleteRecord, CombineSession, ReportDraft } from '../domain/types'
 
 const KEY = 'forge.combine.v1'
@@ -8,7 +9,12 @@ function reanalyze(session: CombineSession): CombineSession {
   const pulls = sessionPullsFrom(exports)
   const athletes: CombineSession['athletes'] = {}
   for (const [id, record] of Object.entries(session.athletes)) {
-    athletes[id] = { ...record, analysis: analyzeAthlete(record.export, pulls) }
+    athletes[id] = {
+      ...record,
+      analysis: analyzeAthlete(record.export, pulls),
+      draft: normalizeDraft(record.draft),
+      letter: normalizeDraft(record.letter),
+    }
   }
   return { ...session, athletes }
 }

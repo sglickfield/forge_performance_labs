@@ -40,12 +40,13 @@ We do not diagnose injury. We surface the split and any tester note (Taylor's ri
 
 Notes are first-class facts. They become caveats the coach should keep or delete, not flavor text for the model to riff on.
 
-## The letter
+## The report
 
 - Written to the athlete, signed by the coach.
-- Specific, calm, high-end. No "crush your goals," no invented programming.
-- Two or three keeps, two or three focuses. Not nine mini-essays.
-- An internal **coach brief** sits beside the letter. It is not printed for the athlete.
+- Shape matches what a coach actually hands over: overview, results table, clustered takeaways, coaching recommendations.
+- Recommendations name training *qualities* (sprint work, plyometrics, hip hinge, mobility, retest window). They do not invent sets, reps, diagnoses, or skipped scores.
+- Handbook ranges are recreational-to-competitive, not elite. The overview says so once.
+- An internal **coach brief** sits beside the report. It is not printed for the athlete.
 
 ## Session
 

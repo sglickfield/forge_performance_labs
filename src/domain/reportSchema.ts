@@ -1,56 +1,61 @@
-import type { ReportDraft } from './types.ts'
+import { GOLD_REPORT_EXAMPLE } from './goldReport.ts'
+import type { ReportDraft, ReportSection } from './types.ts'
 
-export const PROMPT_VERSION = 'forge-report-v1'
+export const PROMPT_VERSION = 'forge-report-v3'
 export const REPORT_MODEL = 'grok-4.6'
+
+const SECTION = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['heading', 'body'],
+  properties: {
+    heading: { type: 'string' },
+    body: {
+      type: 'string',
+      description: 'A full paragraph (at least four sentences). Specific numbers. Sport-aware. Not a one-liner.',
+    },
+  },
+} as const
 
 export const REPORT_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: [
-    'headline',
-    'greeting',
-    'what_we_saw',
-    'keep_doing',
-    'focus_next',
-    'caveats',
-    'signoff',
-    'coach_brief',
-  ],
+  required: ['headline', 'overview', 'takeaways', 'recommendations', 'caveats', 'coach_brief'],
   properties: {
     headline: {
       type: 'string',
-      description: 'One line the athlete can remember. No invented numbers.',
+      description: 'The athletic story in a few words. Example: “Standout explosive speed and power.” Never hedge a Superior score as “just barely.”',
     },
-    greeting: {
+    overview: {
       type: 'string',
-      description: 'One short opening line addressing the athlete by first name.',
+      description:
+        'Two or three full sentences: what was tested, which handbook band, that ranges are recreational-to-competitive not elite. Athlete-facing. Do not explain our internal scoring rules.',
     },
-    what_we_saw: {
-      type: 'string',
-      description: 'One or two short paragraphs. Specific to this combine. Use only fact-pack numbers.',
-    },
-    keep_doing: {
+    takeaways: {
       type: 'array',
-      items: { type: 'string' },
-      description: 'Two or three things that were genuinely good.',
+      minItems: 2,
+      maxItems: 4,
+      items: SECTION,
+      description:
+        'Two to four clustered takeaways. Group speed+power, supporting qualities, and any real issue (skip, split, verify). Full paragraphs with numbers. Do not narrate nine tests.',
     },
-    focus_next: {
+    recommendations: {
       type: 'array',
-      items: { type: 'string' },
-      description: 'Two or three focuses. Not a training program.',
+      minItems: 3,
+      maxItems: 5,
+      items: SECTION,
+      description:
+        'Three to five coaching recommendations a high-end coach would sign. Full paragraphs. Name methods (sprint quality, resisted acceleration, vertical and horizontal plyometrics, contrast pairs, hip hinge, single-leg strength, hamstring/hip-flexor mobility, retest in 8–12 weeks). No sets/reps, no diagnosis, no invented scores.',
     },
     caveats: {
       type: 'array',
       items: { type: 'string' },
-      description: 'Skipped tests, tester notes, verify flags. Empty only if none exist.',
-    },
-    signoff: {
-      type: 'string',
-      description: 'One warm, short closing line. Do not include the coach name.',
+      description:
+        'ONLY real problems: skipped tests, tester notes, verify-outlier flags, injury conditions. If none, return []. Never write “no tests were skipped” or “no handbook range” — the table already covers that.',
     },
     coach_brief: {
       type: 'string',
-      description: 'Internal note for the coach: what to watch, what to edit, what to retest.',
+      description: 'Private note for the coach. Not printed for the athlete.',
     },
   },
 } as const
@@ -58,14 +63,18 @@ export const REPORT_JSON_SCHEMA = {
 export function emptyDraft(): ReportDraft {
   return {
     headline: '',
-    greeting: '',
-    what_we_saw: '',
-    keep_doing: ['', ''],
-    focus_next: ['', ''],
+    overview: '',
+    takeaways: [],
+    recommendations: [],
     caveats: [],
-    signoff: '',
     coach_brief: '',
   }
+}
+
+function isSection(value: unknown): value is ReportSection {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  return typeof v.heading === 'string' && typeof v.body === 'string'
 }
 
 export function isReportDraft(value: unknown): value is ReportDraft {
@@ -73,29 +82,62 @@ export function isReportDraft(value: unknown): value is ReportDraft {
   const v = value as Record<string, unknown>
   return (
     typeof v.headline === 'string' &&
-    typeof v.greeting === 'string' &&
-    typeof v.what_we_saw === 'string' &&
-    Array.isArray(v.keep_doing) &&
-    v.keep_doing.every((item) => typeof item === 'string') &&
-    Array.isArray(v.focus_next) &&
-    v.focus_next.every((item) => typeof item === 'string') &&
+    typeof v.overview === 'string' &&
+    Array.isArray(v.takeaways) &&
+    v.takeaways.every(isSection) &&
+    Array.isArray(v.recommendations) &&
+    v.recommendations.every(isSection) &&
     Array.isArray(v.caveats) &&
     v.caveats.every((item) => typeof item === 'string') &&
-    typeof v.signoff === 'string' &&
     typeof v.coach_brief === 'string'
   )
 }
 
+export function normalizeDraft(value: unknown): ReportDraft | undefined {
+  if (isReportDraft(value)) return value
+  if (typeof value !== 'object' || value === null) return undefined
+  const v = value as Record<string, unknown>
+  if (typeof v.what_we_saw === 'string') {
+    const keep = Array.isArray(v.keep_doing) ? v.keep_doing.filter((item) => typeof item === 'string') : []
+    const focus = Array.isArray(v.focus_next) ? v.focus_next.filter((item) => typeof item === 'string') : []
+    return {
+      headline: typeof v.headline === 'string' ? v.headline : '',
+      overview: v.what_we_saw,
+      takeaways: keep.filter((item) => item.trim()).map((body) => ({ heading: 'Keep this', body })),
+      recommendations: focus.filter((item) => item.trim()).map((body) => ({ heading: 'Focus next', body })),
+      caveats: Array.isArray(v.caveats) ? v.caveats.filter((item) => typeof item === 'string') : [],
+      coach_brief: typeof v.coach_brief === 'string' ? v.coach_brief : '',
+    }
+  }
+  return undefined
+}
+
+export function cleanDraft(draft: ReportDraft): ReportDraft {
+  return {
+    ...draft,
+    caveats: draft.caveats.filter((item) => {
+      const text = item.toLowerCase()
+      if (!item.trim()) return false
+      if (/no tests were skipped/.test(text)) return false
+      if (/no tester/.test(text)) return false
+      if (/no condition/.test(text)) return false
+      if (/not in the 2019 handbook/.test(text)) return false
+      if (/no typical range is claimed/.test(text)) return false
+      if (/no handbook/.test(text)) return false
+      return true
+    }),
+  }
+}
+
 export function systemPrompt(): string {
   return [
-    'You write combine letters for Forge Performance Labs.',
-    'The coach is high-touch (about ten athletes, not a thousand). They used to handwrite: what I saw, what to keep, what to focus on, what was off.',
-    'The letter goes to a paying athlete. A coach name will be signed under it.',
-    'You receive a fact pack. Those facts are the only measurements you may use.',
-    'If a test is skipped, say it was not tested. Never fill in a number.',
-    'Do not invent exercise science, diagnoses, or programming.',
-    'Voice: specific, calm, expensive. Like a note from a coach who actually watched the session.',
-    'Return only the JSON object described by the schema.',
+    'You are an experienced high-performance coach writing the combine report the athlete keeps.',
+    'Match the QUALITY, LENGTH, and USEFULNESS of the example report. Write full paragraphs, not bullets disguised as sentences.',
+    'A Superior score is Superior — do not hedge it as “just above” or “just clears.”',
+    'Talk to the athlete about what the numbers mean for their sport. Do not mention schemas, fact packs, bands as internal codes, or “suggestedFocus.”',
+    'You may recommend training methods. That is the job. Do not invent diagnoses, sets, reps, or skipped-test numbers.',
+    'Caveats only for real problems. Empty array if the sheet is clean.',
+    'Return only the JSON object.',
   ].join(' ')
 }
 
@@ -103,5 +145,15 @@ export function userPrompt(facts: Record<string, unknown>, coachName: string, co
   const extra = coachNote.trim()
     ? `\n\nCoach direction for this redraft:\n${coachNote.trim()}`
     : ''
-  return `Draft the letter and the internal coach brief.\nSigning coach (do not put this name in signoff): ${coachName || '(coach will type their name)'}\n\nFACT PACK:\n${JSON.stringify(facts, null, 2)}${extra}`
+  return `I'm a coach and these are the results from a client combine. Take these and turn it into a meaningful report for them. Here are the benchmarks, already applied to each test.
+
+Write a report I would be proud to put my name on. Same depth as this example (use it as a quality bar, not a source of this athlete's numbers):
+
+${GOLD_REPORT_EXAMPLE}
+
+Signing coach (do not put this name in the report body): ${coachName || '(coach will type their name)'}
+${extra}
+
+THIS ATHLETE'S RESULTS:
+${JSON.stringify(facts, null, 2)}`
 }

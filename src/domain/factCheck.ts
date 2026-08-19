@@ -9,12 +9,11 @@ export interface FactCheckIssue {
 function draftText(draft: ReportDraft): string {
   return [
     draft.headline,
-    draft.greeting,
-    draft.what_we_saw,
-    ...draft.keep_doing,
-    ...draft.focus_next,
+    draft.overview,
+    ...draft.takeaways.flatMap((section) => [section.heading, section.body]),
+    ...draft.recommendations.flatMap((section) => [section.heading, section.body]),
     ...draft.caveats,
-    draft.signoff,
+    draft.coach_brief,
   ]
     .join('\n')
     .toLowerCase()
@@ -25,12 +24,12 @@ export function factCheck(analysis: Analysis, draft: ReportDraft): FactCheckIssu
   const text = draftText(draft)
 
   if (!draft.headline.trim()) issues.push({ code: 'empty_headline', message: 'Headline is empty.' })
-  if (!draft.what_we_saw.trim()) issues.push({ code: 'empty_body', message: '“What we saw” is empty.' })
-  if (draft.keep_doing.filter((item) => item.trim()).length < 1) {
-    issues.push({ code: 'empty_keep', message: 'Need at least one keep.' })
+  if (!draft.overview.trim()) issues.push({ code: 'empty_body', message: 'Overview is empty.' })
+  if (draft.takeaways.filter((section) => section.body.trim()).length < 1) {
+    issues.push({ code: 'empty_keep', message: 'Need at least one takeaway.' })
   }
-  if (draft.focus_next.filter((item) => item.trim()).length < 1) {
-    issues.push({ code: 'empty_focus', message: 'Need at least one focus.' })
+  if (draft.recommendations.filter((section) => section.body.trim()).length < 1) {
+    issues.push({ code: 'empty_focus', message: 'Need at least one recommendation.' })
   }
   if (!draft.coach_brief.trim()) {
     issues.push({ code: 'empty_brief', message: 'Coach brief is empty — the human needs a side note.' })
@@ -47,7 +46,7 @@ export function factCheck(analysis: Analysis, draft: ReportDraft): FactCheckIssu
     if (!mentioned && (test.subtest === 'vertical_jump_cm' || test.subtest === 'broad_jump_cm')) {
       issues.push({
         code: 'unmentioned_skip',
-        message: `${meta.label} was skipped and the letter never says so.`,
+        message: `${meta.label} was skipped and the report never says so.`,
       })
     }
     if (test.raw !== null) {
@@ -55,25 +54,22 @@ export function factCheck(analysis: Analysis, draft: ReportDraft): FactCheckIssu
     }
   }
 
-  // Invented skipped-test numbers: if a skipped test's unit number shows up that is not another test's raw.
   const allowed = allowedNumbers(analysis)
   for (const test of skipped) {
     if (inventedMeasurement(text, test.subtest, allowed)) {
       issues.push({
         code: 'invented_skip_score',
-        message: `Letter appears to invent a score for skipped ${TEST_META[test.subtest].label}.`,
+        message: `Report appears to invent a score for skipped ${TEST_META[test.subtest].label}.`,
       })
     }
   }
 
   const verify = analysis.flags.filter((flag) => flag.kind === 'verify_outlier')
   if (verify.length > 0) {
-    const covered = draft.caveats.join(' ').toLowerCase()
-    const brief = draft.coach_brief.toLowerCase()
-    if (!/verif|check|mistime|outlier|unusual|question/i.test(`${covered}\n${brief}\n${text}`)) {
+    if (!/verif|check|mistime|outlier|unusual|question/i.test(text)) {
       issues.push({
         code: 'unmentioned_outlier',
-        message: 'A verify-outlier flag never made it into the letter or coach brief.',
+        message: 'A verify-outlier flag never made it into the report or coach brief.',
       })
     }
   }
@@ -106,10 +102,8 @@ function allowedNumbers(analysis: Analysis): Set<string> {
 }
 
 function inventedMeasurement(text: string, subtest: SubtestId, allowed: Set<string>): boolean {
-  // Only fire on explicit "<number> cm|s|kg" near jump language for jump skips.
   if (subtest !== 'vertical_jump_cm' && subtest !== 'broad_jump_cm') return false
-  const jumpish = /jump/
-  if (!jumpish.test(text)) return false
+  if (!/jump/.test(text)) return false
   const matches = text.matchAll(/(\d+(?:\.\d+)?)\s*(cm|s|sec)/g)
   for (const match of matches) {
     const n = match[1]

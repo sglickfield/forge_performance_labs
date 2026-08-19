@@ -88,14 +88,17 @@ export interface Analysis {
   }
 }
 
+export interface ReportSection {
+  heading: string
+  body: string
+}
+
 export interface ReportDraft {
   headline: string
-  greeting: string
-  what_we_saw: string
-  keep_doing: string[]
-  focus_next: string[]
+  overview: string
+  takeaways: ReportSection[]
+  recommendations: ReportSection[]
   caveats: string[]
-  signoff: string
   coach_brief: string
 }
 
