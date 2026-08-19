@@ -388,20 +388,96 @@ textarea:focus, .stack input[type='text']:focus {
   color: var(--ink-soft);
 }
 
-.letter h2 {
-  font-size: 28px;
+.letter h1 {
+  font-family: var(--serif);
+  font-size: 30px;
   font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  margin: 0 0 20px;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 4px 0 8px;
 }
+
+.letter .report-kicker {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+.letter .subhead {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.letter h2 {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ink);
+  margin: 28px 0 10px;
+}
+
+.id-table, .results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+.id-table td, .results-table th, .results-table td {
+  border: 1px solid var(--rule);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.results-table th {
+  background: #2c3a56;
+  color: #f4efe6;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.results-table td:nth-child(2),
+.results-table td:nth-child(4) { white-space: nowrap; }
+
+.rating {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rating.above { background: #d7eadc; color: #2f4a38; }
+.rating.typical { background: #d9e4f2; color: #2c3a56; }
+.rating.below { background: #f3d6d0; color: #8f2d22; }
+.rating.skipped { background: #eee8dc; color: #5c5348; }
+.rating.unbenchmarked { background: #eee8dc; color: #5c5348; }
+
+.admin-line, .table-note, .disclaimer {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-soft);
+  margin: 8px 0 0;
+}
+
+.disclaimer { margin-top: 28px; font-style: normal; line-height: 1.45; }
 
 .letter .to { font-style: italic; margin-bottom: 12px; }
 
 .letter .body {
-  font-size: 18px;
-  line-height: 1.45;
-  max-width: 38em;
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 46em;
+  margin: 0 0 12px;
 }
 
 .letter h3 {

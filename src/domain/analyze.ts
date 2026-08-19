@@ -21,7 +21,11 @@ const BALANCE_ASYMMETRY = 0.15
 export function formatRaw(raw: number, unit: string): string {
   const abs = Math.abs(raw)
   const digits = abs >= 100 || Number.isInteger(raw) ? 0 : abs >= 10 ? 1 : 2
-  const value = raw.toFixed(digits).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1')
+  const trimmed = raw.toFixed(digits).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1')
+  const negative = trimmed.startsWith('-')
+  const [whole, frac] = (negative ? trimmed.slice(1) : trimmed).split('.')
+  const grouped = (whole ?? '0').replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  const value = `${negative ? '-' : ''}${grouped}${frac ? `.${frac}` : ''}`
   return `${value} ${unit}`
 }
 
@@ -249,28 +253,31 @@ export function factPack(analysis: Analysis): Record<string, unknown> {
       display: test.raw === null ? 'skipped' : formatRaw(test.raw, test.unit),
       status: test.status,
       band: test.band,
+      rating:
+        test.band === 'above'
+          ? 'Superior'
+          : test.band === 'below'
+            ? 'Below typical'
+            : test.band === 'unbenchmarked'
+              ? 'Recorded (no handbook range)'
+              : test.band === 'skipped'
+                ? 'Not tested'
+                : 'Typical',
       typicalRange: test.range ? `${test.range.lo} to ${test.range.hi} ${test.unit}` : null,
       better: test.better,
       note: test.note ?? null,
     })),
-    flags: analysis.flags.map((flag) => flag.text),
-    suggestedKeep: analysis.keep.map((test) => test.label),
-    suggestedFocus: analysis.focus.map((test) => test.label),
+    flags: analysis.flags
+      .filter((flag) => flag.kind !== 'no_handbook')
+      .map((flag) => ({ kind: flag.kind, text: flag.text })),
     midthighPull: analysis.midthigh
       ? {
           rawN: analysis.midthigh.raw,
           rankInThisCombine: analysis.midthigh.rank,
           combineSize: analysis.midthigh.of,
           handbookRange: null,
+          note: 'No 2019 handbook range. Record as a baseline, do not grade it, do not mention rank unless the combine has several athletes.',
         }
       : null,
-    rules: [
-      'You are drafting a letter the coach will sign and hand to this athlete.',
-      'Use only numbers in this fact pack. Never invent a skipped score.',
-      'Do not prescribe sets, reps, or medical advice.',
-      'High-end, specific, calm. No hype.',
-      'Caveats must cover skipped tests, tester notes, and verify-outlier flags.',
-      'coach_brief is internal — do not address the athlete there.',
-    ],
   }
 }

@@ -1,6 +1,7 @@
 import { factCheck } from '../src/domain/factCheck.ts'
 import { factPack } from '../src/domain/analyze.ts'
 import {
+  cleanDraft,
   isReportDraft,
   PROMPT_VERSION,
   REPORT_JSON_SCHEMA,
@@ -43,7 +44,7 @@ export async function generateReport(
   }
 
   try {
-    const draft = await callGrok(facts, req.coachName, req.coachNote ?? '', apiKey)
+    const draft = cleanDraft(await callGrok(facts, req.coachName, req.coachNote ?? '', apiKey))
     const issues = factCheck(req.analysis, draft)
     if (issues.some((issue) => issue.code === 'invented_skip_score')) {
       const fallback = writeTemplateReport(req.analysis, req.coachName)
@@ -76,7 +77,7 @@ export async function generateReport(
 }
 
 function fromTemplate(analysis: Analysis, coachName: string, warning: string): GenerateResponse {
-  const draft = writeTemplateReport(analysis, coachName)
+  const draft = cleanDraft(writeTemplateReport(analysis, coachName))
   return {
     draft,
     meta: {
@@ -110,7 +111,7 @@ async function callGrok(
     body: JSON.stringify({
       model: REPORT_MODEL,
       messages,
-      temperature: 0.4,
+      temperature: 0.7,
       response_format: {
         type: 'json_schema',
         json_schema: {
@@ -132,8 +133,10 @@ async function callGrok(
   if (!isReportDraft(parsed)) throw new Error('Model JSON did not match the report schema')
   return {
     ...parsed,
-    keep_doing: parsed.keep_doing.filter((item) => item.trim()),
-    focus_next: parsed.focus_next.filter((item) => item.trim()),
+    takeaways: parsed.takeaways.filter((section) => section.heading.trim() || section.body.trim()),
+    recommendations: parsed.recommendations.filter(
+      (section) => section.heading.trim() || section.body.trim(),
+    ),
     caveats: parsed.caveats.filter((item) => item.trim()),
   }
 }

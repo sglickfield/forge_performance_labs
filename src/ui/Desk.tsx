@@ -236,6 +236,16 @@ export function Desk({
   )
 }
 
+function parseSections(text: string) {
+  return text
+    .split(/\n\s*\n/)
+    .map((block) => {
+      const [heading, ...rest] = block.split('\n')
+      return { heading: (heading ?? '').trim(), body: rest.join(' ').trim() }
+    })
+    .filter((section) => section.heading || section.body)
+}
+
 function AthletePane({
   session,
   selected,
@@ -283,7 +293,7 @@ function AthletePane({
         </div>
         <div className="row-actions">
           <button type="button" className="solid" disabled={busy || locked} onClick={onGenerate}>
-            {busy ? 'Writing…' : selected.draft ? 'Redraft' : 'Draft the letter'}
+            {busy ? 'Writing…' : selected.draft ? 'Redraft' : 'Draft the report'}
           </button>
           <button type="button" className="ghost" onClick={() => window.print()}>
             Print / PDF
@@ -312,7 +322,7 @@ function AthletePane({
           <ReportLetter record={selected} letter={letter} coachName={session.coachName} />
           {!locked ? (
             <div className="edit-block">
-              <label htmlFor="headline">Edit the letter before you sign</label>
+              <label htmlFor="headline">Edit the report before you sign</label>
               <input
                 id="headline"
                 type="text"
@@ -321,28 +331,25 @@ function AthletePane({
               />
               <textarea
                 rows={5}
-                value={letter.what_we_saw}
-                onChange={(event) => patch('what_we_saw', event.target.value)}
+                value={letter.overview}
+                onChange={(event) => patch('overview', event.target.value)}
               />
               <textarea
-                rows={3}
-                value={letter.keep_doing.join('\n')}
-                onChange={(event) => patch('keep_doing', event.target.value.split('\n'))}
+                rows={6}
+                value={letter.takeaways.map((section) => `${section.heading}\n${section.body}`).join('\n\n')}
+                onChange={(event) => patch('takeaways', parseSections(event.target.value))}
               />
               <textarea
-                rows={3}
-                value={letter.focus_next.join('\n')}
-                onChange={(event) => patch('focus_next', event.target.value.split('\n'))}
+                rows={8}
+                value={letter.recommendations
+                  .map((section) => `${section.heading}\n${section.body}`)
+                  .join('\n\n')}
+                onChange={(event) => patch('recommendations', parseSections(event.target.value))}
               />
               <textarea
                 rows={3}
                 value={letter.caveats.join('\n')}
                 onChange={(event) => patch('caveats', event.target.value.split('\n'))}
-              />
-              <textarea
-                rows={2}
-                value={letter.signoff}
-                onChange={(event) => patch('signoff', event.target.value)}
               />
             </div>
           ) : null}

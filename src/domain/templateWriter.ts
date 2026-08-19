@@ -1,135 +1,274 @@
 import { formatRaw } from './analyze.ts'
 import { firstName } from './factCheck.ts'
-import type { Analysis, ReportDraft, TestView } from './types.ts'
+import { ratingLabel } from './ratings.ts'
+import type { Analysis, ReportDraft, ReportSection, TestView } from './types.ts'
 
-function describe(test: TestView): string {
-  if (test.status === 'skipped' || test.raw === null) return `${test.label} was not tested`
-  const score = formatRaw(test.raw, test.unit)
-  if (test.band === 'above') return `${test.label} at ${score}, above typical for your group`
-  if (test.band === 'below') return `${test.label} at ${score}, below the typical window`
-  if (test.band === 'unbenchmarked') return `${test.label} at ${score}`
-  return `${test.label} at ${score}, inside the typical window`
-}
+const SPEED_POWER = new Set(['sprint_40m', 'vertical_jump_cm', 'broad_jump_cm'])
+const SUPPORT = new Set([
+  'grip_strength_left_kg',
+  'grip_strength_right_kg',
+  'sit_reach_cm',
+  'balance_left_s',
+  'balance_right_s',
+])
 
 export function writeTemplateReport(analysis: Analysis, coachName: string): ReportDraft {
   const first = firstName(analysis.athlete.name)
-  const sport = analysis.athlete.sport
   const completed = analysis.tests.filter((test) => test.status === 'completed' && test.raw !== null)
   const skipped = analysis.tests.filter((test) => test.status === 'skipped')
-  const above = completed.filter((test) => test.band === 'above')
-  const below = completed.filter((test) => test.band === 'below')
+  const speed = completed.filter((test) => SPEED_POWER.has(test.subtest))
+  const support = completed.filter((test) => SUPPORT.has(test.subtest))
+  const superiorSpeed = speed.filter((test) => test.band === 'above')
+  const weakSupport = support.filter((test) => test.band === 'below')
+  const sexWord = analysis.athlete.sex === 'F' ? 'female' : 'male'
+  const handbook =
+    `typical ranges published for recreational-to-competitive ${sexWord} athletes aged ${analysis.ageBandLabel} (Forge Coach Handbook, 2019, Appendix C)`
 
-  const keep_doing = (analysis.keep.length ? analysis.keep : above.slice(0, 2)).map((test) => {
-    if (test.band === 'above') {
-      return `${test.label} — ${formatRaw(test.raw as number, test.unit)}. That's above the ${analysis.ageBandLabel} typical range. Worth protecting.`
-    }
-    return `${test.label} — ${formatRaw(test.raw as number, test.unit)}, solidly inside typical. Keep the work that's putting it there.`
-  })
+  const overview = skipped.length
+    ? `${first} completed a partial combine at ${analysis.administration.facility} on ${formatDate(analysis.athlete.tested_on)}. ${skipped.map((test) => test.label).join(' and ')} ${skipped.length === 1 ? 'was' : 'were'} not tested${skipReason(skipped)}. Results that we do have are compared against ${handbook}. Those ranges describe common performance bands, not elite standards.`
+    : `${first} completed a full battery of field tests — sprint speed, lower-body power, grip, isometric strength, flexibility, and single-leg balance. Results are compared against ${handbook}. Those ranges describe common performance bands rather than elite standards; scores outside the band in the useful direction are marked Superior.`
 
-  const focus_next: string[] = []
-  for (const test of analysis.focus) {
-    if (test.status === 'skipped') {
-      focus_next.push(`${test.label} was not collected this session. We'll pick it up when you're ready — no guess fills the hole.`)
-      continue
-    }
-    if (test.band === 'below' && test.raw !== null) {
-      focus_next.push(
-        `${test.label} (${formatRaw(test.raw, test.unit)}) sat below typical for ${analysis.ageBandLabel} ${analysis.athlete.sex}. That's the lever I'd put at the top of the next block.`,
-      )
-      continue
-    }
-    if (test.note) {
-      focus_next.push(`${test.label}: ${test.note} I'd rather retest than build a plan on a noisy trial.`)
-    }
-  }
-  if (focus_next.length === 0 && below[0]?.raw !== null && below[0]) {
-    focus_next.push(`${below[0].label} is the cleanest place to get better from this sheet.`)
-  }
-  if (focus_next.length === 0) {
-    focus_next.push('Nothing here is a red flag. Next visit, we go after the same battery so we can see change, not just a snapshot.')
-  }
-
-  const caveats = analysis.flags
-    .filter((flag) => flag.kind === 'skipped' || flag.kind === 'quality' || flag.kind === 'verify_outlier' || flag.kind === 'conditions' || flag.kind === 'asymmetry')
-    .map((flag) => flag.text)
-
-  const pullLine = analysis.midthigh
-    ? ` Mid-thigh pull was ${formatRaw(analysis.midthigh.raw, 'N')} — no handbook range exists; among this week's completed pulls that ranks ${analysis.midthigh.rank} of ${analysis.midthigh.of}.`
-    : ''
-
-  const opener =
-    skipped.length > 0
-      ? `${first}, we did not collect a full battery — ${skipped.map((test) => test.label.toLowerCase()).join(' and ')} came off the sheet.`
-      : `${first}, this is the letter from your ${analysis.administration.facility} combine on ${formatDate(analysis.athlete.tested_on)}.`
-
-  const bodyParts = [
-    opener,
-    completed.length
-      ? `Against the 2019 handbook ranges for ${analysis.ageBandLabel} / ${analysis.athlete.sex}, ${summarizeBands(above.length, below.length, completed.length)} ${sport.toLowerCase()} is the context I read it in.`
-      : '',
-    above[0] ? `The number that jumps first: ${describe(above[0])}.` : '',
-    below[0] ? `The one I'd put a pin in: ${describe(below[0])}.` : '',
-    pullLine.trim(),
-  ].filter(Boolean)
-
-  const headline = headlineFor(analysis, first)
-  const coach_brief = coachBrief(analysis, coachName)
+  const takeaways = buildTakeaways(analysis, first, superiorSpeed, speed, support, weakSupport, skipped)
+  const recommendations = buildRecommendations(analysis, first, superiorSpeed, weakSupport, skipped)
 
   return {
-    headline,
-    greeting: `${first} —`,
-    what_we_saw: bodyParts.join(' '),
-    keep_doing: keep_doing.slice(0, 3),
-    focus_next: focus_next.slice(0, 3),
-    caveats,
-    signoff: 'We will use the next session to see what moved, not to admire the snapshot.',
-    coach_brief,
+    headline: headlineFor(analysis, first, superiorSpeed, skipped),
+    overview,
+    takeaways,
+    recommendations,
+    caveats: caveatsFor(analysis),
+    coach_brief: coachBrief(analysis, coachName),
   }
 }
 
-function summarizeBands(above: number, below: number, completed: number): string {
-  if (above && !below) return `${above} of ${completed} completed tests sat above typical.`
-  if (below && !above) return `${below} of ${completed} completed tests sat below typical.`
-  if (above && below) return `${above} tests sat above typical and ${below} sat below.`
-  return `all ${completed} completed tests landed inside typical.`
+function skipReason(skipped: TestView[]): string {
+  const note = skipped.map((test) => test.note).find((item) => item && !/^see /i.test(item))
+  return note ? ` (${note.replace(/\.$/, '')})` : ''
 }
 
-function headlineFor(analysis: Analysis, first: string): string {
-  const skipped = analysis.tests.some((test) => test.status === 'skipped')
-  const verify = analysis.flags.some((flag) => flag.kind === 'verify_outlier')
-  const split = analysis.flags.some((flag) => flag.kind === 'asymmetry')
-  if (skipped) return `${first}: partial battery — letter written around what we actually measured`
-  if (verify) return `${first}: strong sheet, one number I would verify before we build on it`
-  if (split) return `${first}: the story this week is the left/right split, not the averages`
-  const top = analysis.keep[0]
-  if (top?.raw !== null && top) {
-    return `${first}: ${top.label.toLowerCase()} is the headline (${formatRaw(top.raw, top.unit)})`
+function headlineFor(analysis: Analysis, first: string, superiorSpeed: TestView[], skipped: TestView[]): string {
+  if (skipped.some((test) => SPEED_POWER.has(test.subtest))) {
+    return `Partial battery — report written around what we actually measured`
+  }
+  if (analysis.flags.some((flag) => flag.kind === 'verify_outlier')) {
+    return `Strong sheet, one number I would verify before we build on it`
+  }
+  if (analysis.flags.some((flag) => flag.kind === 'asymmetry')) {
+    return `The story this week is the left/right split, not the averages`
+  }
+  if (superiorSpeed.length >= 2) {
+    return `Standout explosive speed and power`
+  }
+  if (superiorSpeed.length === 1 && superiorSpeed[0]) {
+    return `${superiorSpeed[0].label} is the headline`
   }
   return `${first}: a clean combine snapshot`
+}
+
+function buildTakeaways(
+  analysis: Analysis,
+  first: string,
+  superiorSpeed: TestView[],
+  speed: TestView[],
+  support: TestView[],
+  weakSupport: TestView[],
+  skipped: TestView[],
+): ReportSection[] {
+  const out: ReportSection[] = []
+
+  if (superiorSpeed.length >= 2) {
+    const bits = superiorSpeed.map((test) => `${test.label.toLowerCase()} (${formatRaw(test.raw as number, test.unit)})`)
+    out.push({
+      heading: 'Standout strengths — explosive speed and power',
+      body: `${first}'s ${joinAnd(bits)} all sit above the typical range for her age and sex. These metrics are highly relevant to ${analysis.athlete.sport.toLowerCase()} and indicate excellent reactive strength and acceleration capacity relative to the recreational-to-competitive peer group.`,
+    })
+  } else if (speed.length) {
+    const bits = speed.map((test) => `${test.label} ${formatRaw(test.raw as number, test.unit)} (${ratingLabel(test).toLowerCase()})`)
+    out.push({
+      heading: 'Speed and power',
+      body: `${joinAnd(bits)} against the ${analysis.ageBandLabel} handbook window.`,
+    })
+  }
+
+  if (skipped.some((test) => SPEED_POWER.has(test.subtest))) {
+    out.push({
+      heading: 'Power tests were not collected',
+      body: `Vertical and broad jump came off the sheet${skipReason(skipped.filter((test) => SPEED_POWER.has(test.subtest)))}. This letter does not invent those scores. We will get a true power picture when ${first} is ready to jump.`,
+    })
+  }
+
+  const typicalSupport = support.filter((test) => test.band === 'typical' || test.band === 'above')
+  if (typicalSupport.length && weakSupport.length === 0) {
+    const grip = support.filter((test) => test.subtest.includes('grip') && test.raw !== null)
+    const sit = support.find((test) => test.subtest === 'sit_reach_cm' && test.raw !== null)
+    const bal = support.filter((test) => test.subtest.includes('balance') && test.raw !== null)
+    const parts: string[] = []
+    if (grip.length === 2 && grip[0] && grip[1]) {
+      parts.push(`grip strength (${formatRaw(grip[0].raw as number, 'kg')} / ${formatRaw(grip[1].raw as number, 'kg')})`)
+    }
+    if (sit) parts.push(`sit-and-reach (${formatRaw(sit.raw as number, 'cm')})`)
+    if (bal.length === 2 && bal[0] && bal[1]) {
+      parts.push(`single-leg balance (${formatRaw(bal[0].raw as number, 's')} / ${formatRaw(bal[1].raw as number, 's')})`)
+    }
+    out.push({
+      heading: 'Solid foundation in supporting qualities',
+      body: `${capitalize(joinAnd(parts))} all fall comfortably inside the typical band. There is no current deficit that would be expected to limit the main qualities on this sheet, though modest improvements in flexibility and balance symmetry can still support injury resilience and technical consistency.`,
+    })
+  }
+
+  if (weakSupport.length) {
+    out.push({
+      heading: 'Clear limiter on this sheet',
+      body: `${joinAnd(weakSupport.map((test) => `${test.label} at ${formatRaw(test.raw as number, test.unit)}`))} sat below typical for this group. That is the lever I would put at the top of the next block.`,
+    })
+  }
+
+  if (analysis.midthigh) {
+    out.push({
+      heading: 'Isometric strength baseline established',
+      body: `The mid-thigh pull of ${formatRaw(analysis.midthigh.raw, 'N')} provides a useful force-production reference for future testing. The 2019 handbook does not grade this test; tracking the number across blocks is the point. ${analysis.midthigh.of > 1 ? `Among this week's completed pulls it ranks ${analysis.midthigh.rank} of ${analysis.midthigh.of}.` : ''}`.trim(),
+    })
+  }
+
+  if (analysis.flags.some((flag) => flag.kind === 'verify_outlier')) {
+    const flag = analysis.flags.find((item) => item.kind === 'verify_outlier')
+    out.push({
+      heading: 'One number I would verify',
+      body: `${flag?.text ?? 'A result sits well outside typical.'} I would rather confirm the trial than write a plan on it.`,
+    })
+  }
+
+  if (analysis.flags.some((flag) => flag.kind === 'asymmetry')) {
+    const splits = analysis.flags.filter((flag) => flag.kind === 'asymmetry').map((flag) => flag.text)
+    out.push({
+      heading: 'Left/right split',
+      body: `${splits.join(' ')} I would rather name that than average it away.`,
+    })
+  }
+
+  return out.slice(0, 4)
+}
+
+function buildRecommendations(
+  analysis: Analysis,
+  first: string,
+  superiorSpeed: TestView[],
+  weakSupport: TestView[],
+  skipped: TestView[],
+): ReportSection[] {
+  const sport = analysis.athlete.sport.toLowerCase()
+  const out: ReportSection[] = []
+  const ankle = /ankle|sprain/.test(
+    `${analysis.administration.conditions_note} ${analysis.tests.map((test) => test.note ?? '').join(' ')}`,
+  )
+  const wrist = /wrist/.test(analysis.tests.map((test) => test.note ?? '').join(' '))
+
+  if (skipped.some((test) => SPEED_POWER.has(test.subtest))) {
+    out.push({
+      heading: 'Do not program the missing jumps',
+      body: `Until we have a vertical and a broad jump, keep power work inside what ${first} can do pain-free. The letter should not pretend we measured explosiveness this week.`,
+    })
+  } else if (superiorSpeed.length >= 2 || /sprint|track|football|basketball|volleyball/.test(sport)) {
+    out.push({
+      heading: 'Speed and power maintenance / progression',
+      body: `Given the clear superiority in speed and power, programming should keep quality sprint work, plyometrics, and resisted acceleration at the centre while protecting what is already there. Maintain high-intensity sprint volumes with adequate recovery. Continue vertical and horizontal plyometric progressions; consider adding contrast or complex pairs once technical quality is consistent.`,
+    })
+  }
+
+  if (wrist) {
+    out.push({
+      heading: 'Retest the sore side before you load it',
+      body: `Right-side grip was completed with wrist soreness on the sheet. I would rather retest than write a pulling block off that trial.`,
+    })
+  } else {
+    out.push({
+      heading: 'Strength support',
+      body: analysis.midthigh
+        ? `Use the mid-thigh pull (${formatRaw(analysis.midthigh.raw, 'N')}) as a monitoring tool. A well-rounded lower-body strength program — hip hinge and single-leg patterns — will support force production and transfer to ${sport.includes('run') || sport.includes('sprint') || sport.includes('track') ? 'sprinting' : 'the field'}.`
+        : `A well-rounded lower-body strength program (hip hinge and single-leg patterns) will support force production on the next combine.`,
+    })
+  }
+
+  const sit = analysis.tests.find((test) => test.subtest === 'sit_reach_cm')
+  const balL = analysis.tests.find((test) => test.subtest === 'balance_left_s')
+  const balR = analysis.tests.find((test) => test.subtest === 'balance_right_s')
+  const split =
+    balL?.raw !== null &&
+    balR?.raw !== null &&
+    balL &&
+    balR &&
+    Math.abs((balL.raw as number) - (balR.raw as number)) >= 2
+
+  if (ankle) {
+    out.push({
+      heading: 'Return-to-run, then retest jumps',
+      body: `The ankle history is the constraint, not a character note. Keep single-leg stability and calf/ankle capacity in the work; put jumping tests back on the sheet when ${first} asks for them.`,
+    })
+  } else {
+    out.push({
+      heading: 'Mobility and balance polish',
+      body: `${sit?.raw !== null && sit ? `Sit-and-reach is ${formatRaw(sit.raw, 'cm')}, mid-range for this group.` : 'Mobility is not a red flag.'} Targeted hamstring and hip-flexor work can still clean up sprint mechanics.${split && balL && balR ? ` The ${formatRaw(balL.raw as number, 's')} vs ${formatRaw(balR.raw as number, 's')} balance split is small — single-leg stability drills will even it out and reinforce landing control.` : ''}`,
+    })
+  }
+
+  if (weakSupport.length) {
+    out.push({
+      heading: `Make ${weakSupport[0]?.label.toLowerCase()} the next-block priority`,
+      body: `That is the only quality on this sheet below typical. Give it a real block and retest it on purpose, not as an afterthought.`,
+    })
+  }
+
+  out.push({
+    heading: 'Retest cadence',
+    body: `Re-test the full battery in 8–12 weeks after a focused block so we can see what moved — especially ${superiorSpeed.length ? 'the superior speed/power markers and ' : ''}the mid-thigh pull${skipped.length ? ', and the tests we skipped this time' : ''}.`,
+  })
+
+  return out.slice(0, 4)
+}
+
+function caveatsFor(analysis: Analysis): string[] {
+  return analysis.flags
+    .filter(
+      (flag) =>
+        flag.kind === 'skipped' ||
+        flag.kind === 'quality' ||
+        flag.kind === 'verify_outlier' ||
+        flag.kind === 'conditions' ||
+        flag.kind === 'asymmetry',
+    )
+    .map((flag) => flag.text)
 }
 
 function coachBrief(analysis: Analysis, coachName: string): string {
   const bits: string[] = []
   const who = coachName.trim() ? `${coachName.trim()}: ` : ''
   if (analysis.flags.some((flag) => flag.kind === 'skipped')) {
-    bits.push('Do not let a draft invent jump (or any) scores. The caveats are load-bearing.')
+    bits.push('Do not let a draft invent jump (or any) scores.')
   }
   if (analysis.flags.some((flag) => flag.kind === 'verify_outlier')) {
-    bits.push('There is a verify-outlier on this sheet. Ask the tester about timing / setup before the athlete internalizes that number.')
+    bits.push('Verify the outlier with the tester before the athlete internalizes it.')
   }
   if (analysis.flags.some((flag) => flag.kind === 'asymmetry')) {
-    bits.push('Call the L/R split in your own words. The athlete will notice if you smooth it over.')
+    bits.push('The L/R split is in the takeaways — keep it if you sign.')
   }
   if (analysis.flags.some((flag) => flag.kind === 'quality')) {
-    bits.push('A tester marked a quality issue. I would rather retest than program off it.')
-  }
-  if (analysis.midthigh) {
-    bits.push('No handbook range for mid-thigh pull — I used within-week rank only.')
+    bits.push('A tester marked a quality issue. Prefer a retest to programming off it.')
   }
   if (bits.length === 0) {
-    bits.push('Clean sheet. Light edit, then sign. Nothing here needs a phone call.')
+    bits.push('Clean sheet. Light edit, then sign. Recommendations are qualities, not a program.')
   }
   return who + bits.join(' ')
+}
+
+function joinAnd(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? ''
+  if (items.length === 2) return `${items[0]} and ${items[1]}`
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`
+}
+
+function capitalize(text: string): string {
+  if (!text) return text
+  return text[0]!.toUpperCase() + text.slice(1)
 }
 
 function formatDate(iso: string): string {

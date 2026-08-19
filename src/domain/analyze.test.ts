@@ -66,13 +66,25 @@ describe('analyzeAthlete', () => {
   })
 })
 
-describe('template + fact-check (Casey is the golden fixture)', () => {
-  it('refuses to invent jump scores and requires caveats', () => {
+describe('template + fact-check', () => {
+  it('writes Aisha as a clustered report, not nine isolated scores', () => {
+    const analysis = analyzeAthlete(load('aisha-bell.json'))
+    const draft = writeTemplateReport(analysis, 'Alex F')
+    expect(factCheck(analysis, draft)).toEqual([])
+    expect(draft.overview.toLowerCase()).toMatch(/handbook|typical range/)
+    const takeawayText = draft.takeaways.map((section) => `${section.heading} ${section.body}`).join(' ')
+    expect(takeawayText.toLowerCase()).toMatch(/sprint/)
+    expect(takeawayText.toLowerCase()).toMatch(/jump/)
+    expect(draft.recommendations.length).toBeGreaterThanOrEqual(3)
+    expect(draft.recommendations.some((section) => /sprint|plyo|strength|re-?test/i.test(section.body))).toBe(true)
+  })
+
+  it('refuses to invent Casey jump scores and requires caveats', () => {
     const analysis = analyzeAthlete(load('casey-morgan.json'))
     const draft = writeTemplateReport(analysis, 'Alex F')
     const issues = factCheck(analysis, draft)
     expect(issues).toEqual([])
-    const letter = `${draft.what_we_saw} ${draft.caveats.join(' ')} ${draft.focus_next.join(' ')}`.toLowerCase()
+    const letter = `${draft.overview} ${draft.caveats.join(' ')} ${draft.takeaways.map((s) => s.body).join(' ')}`.toLowerCase()
     expect(letter).toMatch(/jump|skipped|not tested|not collect/)
     expect(letter).not.toMatch(/vertical jump[^\n.]{0,40}\d+/)
   })
@@ -80,7 +92,7 @@ describe('template + fact-check (Casey is the golden fixture)', () => {
   it('catches a draft that invents Casey’s vertical', () => {
     const analysis = analyzeAthlete(load('casey-morgan.json'))
     const draft = writeTemplateReport(analysis, 'Alex F')
-    draft.what_we_saw += ' Vertical jump 44 cm was excellent.'
+    draft.overview += ' Vertical jump 44 cm was excellent.'
     const issues = factCheck(analysis, draft)
     expect(issues.some((issue) => issue.code === 'invented_skip_score')).toBe(true)
   })
