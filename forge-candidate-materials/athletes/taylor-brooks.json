@@ -1,0 +1,63 @@
+{
+  "athlete": {
+    "name": "Taylor Brooks",
+    "athlete_id": "FPL-2286",
+    "age": 31,
+    "sex": "M",
+    "sport": "CrossFit (competitive)",
+    "tested_on": "2026-07-16"
+  },
+  "administration": {
+    "facility": "Ridgeline Athletics",
+    "administered_by": "M. Sandoval",
+    "conditions_note": ""
+  },
+  "results": [
+    {
+      "subtest": "sprint_40m",
+      "raw": 4.78,
+      "status": "completed"
+    },
+    {
+      "subtest": "vertical_jump_cm",
+      "raw": 61.0,
+      "status": "completed"
+    },
+    {
+      "subtest": "broad_jump_cm",
+      "raw": 245,
+      "status": "completed"
+    },
+    {
+      "subtest": "grip_strength_left_kg",
+      "raw": 52.0,
+      "status": "completed"
+    },
+    {
+      "subtest": "grip_strength_right_kg",
+      "raw": 36.0,
+      "status": "completed",
+      "note": "Athlete mentioned right wrist soreness during testing; completed all trials."
+    },
+    {
+      "subtest": "midthigh_pull_n",
+      "raw": 2900,
+      "status": "completed"
+    },
+    {
+      "subtest": "sit_reach_cm",
+      "raw": 7.0,
+      "status": "completed"
+    },
+    {
+      "subtest": "balance_left_s",
+      "raw": 41.0,
+      "status": "completed"
+    },
+    {
+      "subtest": "balance_right_s",
+      "raw": 12.0,
+      "status": "completed"
+    }
+  ]
+}
