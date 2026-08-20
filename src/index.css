@@ -201,6 +201,36 @@ a.ghost {
   box-shadow: var(--shadow);
 }
 
+.drawer-actions {
+  padding: 16px 20px;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(28, 23, 18, 0.28);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.dialog {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow);
+  max-width: 32em;
+  padding: 22px 24px 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.dialog h2 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+}
+
 .roster h2 {
   font-size: 11px;
   letter-spacing: 0.16em;
@@ -317,6 +347,24 @@ a.ghost {
 }
 
 .identity .who { color: var(--ink-soft); margin-top: 4px; }
+
+.date-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.date-toggle .ghost {
+  min-width: 2rem;
+  padding: 4px 10px;
+}
+
+.date-toggle .ghost:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
 
 .scores {
   display: grid;
@@ -718,7 +766,7 @@ textarea:focus, .stack input[type='text']:focus, .edit-rail input:focus, .edit-r
 
 @media print {
   body { background: white; }
-  .topbar, .roster, .drawer-handle, .drawer-backdrop, .hitl, .edit-rail, .identity .row-actions, .athlete-foot { display: none !important; }
+  .topbar, .roster, .drawer-handle, .drawer-backdrop, .dialog-backdrop, .hitl, .edit-rail, .identity .row-actions, .date-toggle, .athlete-foot { display: none !important; }
   .workspace, .composer { display: block; }
   .composer .letter-wrap {
     display: block;

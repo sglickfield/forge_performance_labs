@@ -123,6 +123,11 @@ export interface CoachRating {
 
 export type AthleteStatus = 'new' | 'draft' | 'signed'
 
+export interface CombineFile {
+  tested_on: string
+  filename: string
+}
+
 export interface AthleteRecord {
   sourceName: string
   export: AthleteExport
@@ -137,9 +142,15 @@ export interface AthleteRecord {
   shareToken?: string
 }
 
+export interface AthleteSlot {
+  files: CombineFile[]
+  active: string
+  records: Record<string, AthleteRecord>
+}
+
 export interface CombineSession {
-  version: 1
+  version: 2
   coachName: string
   loadedAt: string
-  athletes: Record<string, AthleteRecord>
+  athletes: Record<string, AthleteSlot>
 }
