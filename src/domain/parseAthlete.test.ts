@@ -37,6 +37,15 @@ describe('parseAthleteExport', () => {
     ).toThrow(ParseError)
   })
 
+  it('rejects a tested_on that is not YYYY-MM-DD', () => {
+    expect(() =>
+      parseAthleteExport({
+        ...valid,
+        athlete: { ...valid.athlete, tested_on: 'July 14' },
+      }),
+    ).toThrow(/tested_on/)
+  })
+
   it('rejects unknown subtests so a new combine file fails loudly', () => {
     expect(() =>
       parseAthleteExport({

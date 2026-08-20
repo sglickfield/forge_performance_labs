@@ -84,6 +84,6 @@ The athlete letter is the product surface, not a dashboard of cards. Coach chrom
 
 - No accounts, no cloud, no email send.
 - No mid-thigh pull handbook range — we say so, and use within-combine rank.
-- No historical compare. This week's files only.
+- No progress charts. The coach can toggle prior combines for an athlete; we do not graph them.
 - No mobile-first layout.
 - No prompt-injection fortress. The only untrusted text is a tester note, and it is treated as data inside a fact pack.

@@ -1,6 +1,13 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
-import { listLatestExports, listSummaries, readExport, saveExport } from './server/athleteStore.ts'
+import {
+  listLatestExports,
+  listSummaries,
+  readExport,
+  saveExport,
+  SaveConflictError,
+  type SaveMode,
+} from './server/athleteStore.ts'
 import { generateReport, type GenerateRequest } from './server/generateReport.ts'
 import { publishShare, readShare, unpublishShare } from './server/shareStore.ts'
 import type { PublicLetter } from './src/domain/share.ts'
@@ -33,6 +40,7 @@ function forgeApiPlugin(apiKey: string | undefined) {
             athletes: listLatestExports().map((item) => ({
               sourceName: item.sourceName,
               export: item.export,
+              files: item.files,
             })),
           }))
           return
@@ -51,9 +59,23 @@ function forgeApiPlugin(apiKey: string | undefined) {
         if (req.method === 'POST' && path === '/api/athletes') {
           try {
             const body = await readJson(req)
-            const saved = saveExport(body)
+            const { payload, mode } = unwrapSaveBody(body)
+            const saved = saveExport(payload, { mode })
             res.end(JSON.stringify(saved))
           } catch (error) {
+            if (error instanceof SaveConflictError) {
+              res.statusCode = 409
+              res.end(JSON.stringify({
+                conflict: true,
+                identical: error.identical,
+                athlete_id: error.athlete_id,
+                tested_on: error.tested_on,
+                athlete_name: error.athlete_name,
+                filename: error.filename,
+                error: error.message,
+              }))
+              return
+            }
             res.statusCode = 400
             res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Bad request' }))
           }
@@ -108,6 +130,15 @@ function forgeApiPlugin(apiKey: string | undefined) {
       })
     },
   }
+}
+
+function unwrapSaveBody(body: unknown): { payload: unknown; mode: SaveMode } {
+  if (typeof body === 'object' && body !== null && 'export' in body) {
+    const wrapped = body as { export: unknown; mode?: unknown }
+    const mode = wrapped.mode === 'replace' || wrapped.mode === 'copy' ? wrapped.mode : 'new'
+    return { payload: wrapped.export, mode }
+  }
+  return { payload: body, mode: 'new' }
 }
 
 function readJson(req: unknown): Promise<unknown> {

@@ -21,6 +21,14 @@ function asString(value: unknown, field: string): string {
   return value.trim()
 }
 
+function asTestedOn(value: unknown): string {
+  const tested = asString(value, 'athlete.tested_on')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(tested)) {
+    throw new ParseError('athlete.tested_on must be YYYY-MM-DD')
+  }
+  return tested
+}
+
 function asNumber(value: unknown, field: string): number {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     throw new ParseError(`Invalid ${field}`)
@@ -75,7 +83,7 @@ export function parseAthleteExport(input: unknown): AthleteExport {
     age: asNumber(input.athlete.age, 'athlete.age'),
     sex: asSex(input.athlete.sex),
     sport: asString(input.athlete.sport, 'athlete.sport'),
-    tested_on: asString(input.athlete.tested_on, 'athlete.tested_on'),
+    tested_on: asTestedOn(input.athlete.tested_on),
   }
 
   const administration = {

@@ -51,4 +51,4 @@ Notes are first-class facts. They become caveats the coach should keep or delete
 
 ## Session
 
-New export files arrive after every combine. The running app must accept any file in this format. Re-uploading the same `athlete_id` replaces the export and clears an unsigned draft.
+New export files arrive after every combine. The running app must accept any file in this format. Each athlete folder can hold multiple dates; the desk toggles between them. Re-uploading the same `athlete_id` and date asks before replacing.

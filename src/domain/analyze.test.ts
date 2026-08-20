@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findLatestById } from '../../server/athleteStore.ts'
+import { findLatestById, readExport } from '../../server/athleteStore.ts'
 import { analyzeAthlete, sessionPullsFrom } from './analyze'
 import { factCheck } from './factCheck'
 import { writeTemplateReport } from './templateWriter'
@@ -43,10 +43,14 @@ describe('analyzeAthlete', () => {
   })
 
   it('ranks mid-thigh pull inside the loaded combine', () => {
-    const names = ['FPL-2429', 'FPL-2455', 'FPL-2401', 'FPL-2088']
-    const batch = names.map(load)
+    const batch = [
+      readExport('FPL-2429', '2026-07-16.json'),
+      readExport('FPL-2455', '2026-07-15.json'),
+      readExport('FPL-2401', '2026-07-15.json'),
+      readExport('FPL-2088', '2026-07-17.json'),
+    ]
     const pulls = sessionPullsFrom(batch)
-    const sam = analyzeAthlete(load('FPL-2401'), pulls)
+    const sam = analyzeAthlete(readExport('FPL-2401', '2026-07-15.json'), pulls)
     expect(sam.midthigh?.raw).toBe(3100)
     expect(sam.midthigh?.rank).toBe(1)
     expect(sam.midthigh?.of).toBe(4)
