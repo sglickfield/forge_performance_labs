@@ -289,17 +289,9 @@ export function Desk({
           <div className="lab">
             Forge <em>Monday desk</em>
           </div>
-          <div className="sub">Coach report writer · July combine week</div>
+          <div className="sub">Coach report writer</div>
         </div>
         <div className="topbar-right">
-          <label className="signing">
-            Signing as
-            <input
-              value={session.coachName}
-              placeholder="Your name"
-              onChange={(event) => onSession(setCoachName(session, event.target.value))}
-            />
-          </label>
           <button type="button" className="ghost" onClick={openUpload}>
             Upload JSON
           </button>
@@ -409,6 +401,7 @@ export function Desk({
                 onSession(rateAthlete(session, selected.export.athlete.athlete_id, verdict))
               }
               onUnlock={() => void unlockSelected()}
+              onCoachName={(name) => onSession(setCoachName(session, name))}
               onSelectCombine={(filename) => void showCombine(filename)}
               onClear={() => {
                 onSession(clearSession(session.coachName))

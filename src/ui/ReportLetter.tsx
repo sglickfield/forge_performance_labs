@@ -24,6 +24,7 @@ export function ReportLetter(view: LetterView) {
   return (
     <article className="letter">
       <LetterMasthead {...view} />
+      <LetterHeadline {...view} />
       <LetterOverview {...view} />
       <LetterResults {...view} />
       <LetterTakeaways {...view} />
@@ -45,38 +46,46 @@ export function ReportComposer({ view, edits }: { view: LetterView; edits?: Lett
   return (
     <div className="composer">
       <article className="letter letter-wrap">
-        <div className="letter-band">
+        <div className="letter-band band-meta">
           <LetterMasthead {...view} />
         </div>
-        <div className="letter-band">
+        <div className="letter-band band-headline">
+          <LetterHeadline {...view} keep />
+        </div>
+        <div className="letter-band band-overview">
           <LetterOverview {...view} />
         </div>
-        <div className="letter-band">
+        <div className="letter-band band-results">
           <LetterResults {...view} />
         </div>
-        <div className="letter-band">
+        <div className="letter-band band-takeaways">
           <LetterTakeaways {...view} />
         </div>
-        <div className="letter-band">
+        <div className="letter-band band-recs">
           <LetterRecommendations {...view} />
         </div>
-        <div className="letter-band">
-          <LetterClose {...view} />
+        <div className="letter-band band-caveats">
+          <LetterCaveats {...view} />
+        </div>
+        <div className="letter-band band-close">
+          <LetterSignoff {...view} />
         </div>
       </article>
       <aside className="edit-rail">
-        <div className="edit-slot">{edits.headline}</div>
-        <div className="edit-slot">{edits.overview}</div>
-        <div className="edit-slot" />
-        <div className="edit-slot">{edits.takeaways}</div>
-        <div className="edit-slot">{edits.recommendations}</div>
-        <div className="edit-slot">{edits.caveats}</div>
+        <div className="edit-slot edit-meta" />
+        <div className="edit-slot edit-headline">{edits.headline}</div>
+        <div className="edit-slot edit-overview">{edits.overview}</div>
+        <div className="edit-slot edit-results" />
+        <div className="edit-slot edit-takeaways">{edits.takeaways}</div>
+        <div className="edit-slot edit-recs">{edits.recommendations}</div>
+        <div className="edit-slot edit-caveats">{edits.caveats}</div>
+        <div className="edit-slot edit-close" />
       </aside>
     </div>
   )
 }
 
-function LetterMasthead({ athlete, administration, letter }: LetterView) {
+function LetterMasthead({ athlete, administration }: LetterView) {
   const sexWord = athlete.sex === 'F' ? 'Female' : 'Male'
   return (
     <>
@@ -87,7 +96,6 @@ function LetterMasthead({ athlete, administration, letter }: LetterView) {
           <p className="subhead">
             Field testing summary compared with Forge Coach Handbook (2019) benchmarks
           </p>
-          {letter.headline ? <p className="headline-line">{letter.headline}</p> : null}
         </div>
       </header>
       <table className="id-table">
@@ -116,6 +124,11 @@ function LetterMasthead({ athlete, administration, letter }: LetterView) {
       </p>
     </>
   )
+}
+
+function LetterHeadline({ letter, keep }: LetterView & { keep?: boolean }) {
+  if (!letter.headline && !keep) return null
+  return <p className="headline-line">{letter.headline || '\u00a0'}</p>
 }
 
 function LetterOverview({ letter }: LetterView) {
@@ -205,7 +218,7 @@ function LetterRecommendations({ letter }: LetterView) {
   )
 }
 
-function LetterClose({ administration, letter, signedBy, signedAt }: LetterView) {
+function LetterCaveats({ letter }: LetterView) {
   return (
     <>
       <h2>How to read this sheet</h2>
@@ -218,6 +231,13 @@ function LetterClose({ administration, letter, signedBy, signedAt }: LetterView)
       ) : (
         <p className="body meta">No caveats.</p>
       )}
+    </>
+  )
+}
+
+function LetterSignoff({ administration, letter, signedBy, signedAt }: LetterView) {
+  return (
+    <>
       <p className="disclaimer">
         This report is intended for coaching and athlete development. Benchmarks are drawn from the
         Forge Coach Handbook (2019 edition), Appendix C, and represent typical ranges for
@@ -236,6 +256,15 @@ function LetterClose({ administration, letter, signedBy, signedAt }: LetterView)
           {administration.facility} · Confidential athlete data
         </div>
       </div>
+    </>
+  )
+}
+
+function LetterClose(view: LetterView) {
+  return (
+    <>
+      <LetterCaveats {...view} />
+      <LetterSignoff {...view} />
     </>
   )
 }
