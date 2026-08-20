@@ -10,7 +10,7 @@ import {
 } from './server/athleteStore.ts'
 import { generateReport, type GenerateRequest } from './server/generateReport.ts'
 import { publishShare, readShare, unpublishShare } from './server/shareStore.ts'
-import type { PublicLetter } from './src/domain/share.ts'
+import type { PublicLetter } from './src/domain/publicLetter.ts'
 
 function forgeApiPlugin(apiKey: string | undefined) {
   return {

@@ -12,4 +12,4 @@ You may only report a task as complete to the user if:
 - `bash bin/validate.sh` passes completely with an exit code of 0.
 - No new console warnings or typescript compilation errors were introduced.
 
-Read `AGENTS.md` and `docs/DECISIONS.md` before changing product behavior.
+Read `docs/AGENTS.md` and `docs/DECISIONS.md` before changing product behavior.

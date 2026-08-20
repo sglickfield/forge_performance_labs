@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { findLatestById, readExport } from '../../server/athleteStore.ts'
-import { analyzeAthlete, sessionPullsFrom } from './analyze'
-import { factCheck } from './factCheck'
-import { writeTemplateReport } from './templateWriter'
+import { analyzeAthlete, sessionPullsFrom } from './analyze.ts'
+import { factCheck } from './factCheck.ts'
+import { writeTemplateReport } from './templateWriter.ts'
 
 function load(id: string) {
   return findLatestById(id)

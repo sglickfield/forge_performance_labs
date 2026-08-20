@@ -75,7 +75,7 @@ The athlete letter is the product surface, not a dashboard of cards. Coach chrom
 
 ## Repo for humans and agents
 
-- `AGENTS.md` — how to run, where truth lives, what not to invent.
+- `docs/AGENTS.md` — how to run, where truth lives, what not to invent.
 - `docs/ASSUMPTIONS.md` — exercise-science and product assumptions.
 - `docs/LOOM.md` — the 5-minute story, written before the recording.
 - `bin/validate.sh` — lint, typecheck, unit tests. Definition of done. Root `validate.sh` just execs this.

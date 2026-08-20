@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { athleteSharePath, type SharedLetter } from '../domain/share'
-import { ReportLetter } from './ReportLetter'
+import { athleteSharePath, type SharedLetter } from '../domain/publicLetter.ts'
+import { ReportLetter } from './ReportLetter.tsx'
 
 export function AthleteView({ token }: { token: string }) {
   const [letter, setLetter] = useState<SharedLetter | null>(null)

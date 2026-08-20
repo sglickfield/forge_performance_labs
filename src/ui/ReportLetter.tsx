@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { interpretation, rangeLabel, ratingLabel, resultLabel } from '../domain/ratings'
-import type { Administration, AthleteIdentity, ReportDraft, TestView } from '../domain/types'
+import { interpretation, rangeLabel, ratingLabel, resultLabel } from '../domain/bandLabels.ts'
+import type { Administration, AthleteIdentity, ReportDraft, TestView } from '../domain/types.ts'
 
 export interface LetterView {
   athlete: AthleteIdentity

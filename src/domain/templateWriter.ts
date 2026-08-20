@@ -1,6 +1,5 @@
-import { formatRaw } from './analyze.ts'
-import { firstName } from './factCheck.ts'
-import { ratingLabel } from './ratings.ts'
+import { formatRaw, firstName } from './format.ts'
+import { ratingLabel } from './bandLabels.ts'
 import type { Analysis, ReportDraft, ReportSection, TestView } from './types.ts'
 
 const SPEED_POWER = new Set(['sprint_40m', 'vertical_jump_cm', 'broad_jump_cm'])

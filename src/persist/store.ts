@@ -1,5 +1,5 @@
-import { analyzeAthlete, sessionPullsFrom } from '../domain/analyze'
-import { normalizeDraft } from '../domain/reportSchema'
+import { analyzeAthlete, sessionPullsFrom } from '../domain/analyze.ts'
+import { normalizeDraft } from '../domain/reportSchema.ts'
 import type {
   Analysis,
   AthleteExport,
@@ -9,9 +9,10 @@ import type {
   CombineFile,
   CombineSession,
   ReportDraft,
-} from '../domain/types'
+} from '../domain/types.ts'
 
-const KEY = 'forge.combine.v1'
+const KEY = 'forge.combine.v2'
+const LEGACY_KEY = 'forge.combine.v1'
 
 export function fileLabel(file: CombineFile): string {
   const extra = file.filename.match(/__(\d+)\.json$/)
@@ -95,11 +96,14 @@ function migrate(raw: CombineSession & { version: number }): CombineSession {
 
 export function loadSession(): CombineSession {
   try {
-    const raw = localStorage.getItem(KEY)
+    const fromLegacy = !localStorage.getItem(KEY) && Boolean(localStorage.getItem(LEGACY_KEY))
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY)
     if (!raw) return emptySession()
     const parsed = JSON.parse(raw) as CombineSession & { version: number }
     if (!parsed.athletes) return emptySession()
-    return reanalyze(migrate(parsed))
+    const session = reanalyze(migrate(parsed))
+    if (fromLegacy) localStorage.removeItem(LEGACY_KEY)
+    return session
   } catch {
     return emptySession()
   }

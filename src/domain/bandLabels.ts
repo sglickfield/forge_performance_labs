@@ -1,4 +1,4 @@
-import { formatRaw } from './analyze.ts'
+import { formatRaw } from './format.ts'
 import type { TestView } from './types.ts'
 
 export function ratingLabel(test: TestView): string {

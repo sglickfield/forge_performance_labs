@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { SHARE_TOKEN_PATTERN, type PublicLetter, type SharedLetter } from '../src/domain/share.ts'
+import { SHARE_TOKEN_PATTERN, type PublicLetter, type SharedLetter } from '../src/domain/publicLetter.ts'
 import { DATA_DIR } from './athleteStore.ts'
 
 const DEFAULT_SHARE_DIR = join(DATA_DIR, 'share')

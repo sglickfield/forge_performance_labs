@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ParseError, parseAthleteExport } from './parseAthlete'
+import { ParseError, parseAthleteExport } from './parseAthlete.ts'
 
 const valid = {
   athlete: {
