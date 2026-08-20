@@ -11,7 +11,7 @@ The only location for combine exports (seed week and later uploads).
 - The desk loads the latest `tested_on` first, then the coach can toggle older combines on that athlete.
 - Uploads are written here. If that date already exists, the desk asks whether to replace or keep both (`2026-07-16__2.json`).
 - Tests and eval **read** this tree. They must not write here.
-- `golden_datasets/` is eval gold (letters), not input.
+- `golden_datasets/` is eval gold and the confidence reference, not combine input.
 - Signed, shareable letters are `data/share/<token>.json` (gitignored). Not combine input. The athlete page is `/a/<token>`.
 
 ## Handbook

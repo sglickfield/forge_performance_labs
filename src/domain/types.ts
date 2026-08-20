@@ -110,6 +110,7 @@ export interface GenerateMeta {
   generatedAt: string
   warning?: string
   confidence?: Confidence
+  goldStatus?: 'scored' | 'missing'
 }
 
 export type CoachVerdict = 'ready' | 'edited' | 'rewrite'

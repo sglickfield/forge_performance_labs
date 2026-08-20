@@ -14,14 +14,26 @@ export function hasGoldLetter(athleteName: string): boolean {
   return existsSync(join(goldTextDir, stem))
 }
 
-export async function scoreAgainstGold(
+export type GoldClassification =
+  | { goldStatus: 'scored'; confidence: Confidence }
+  | { goldStatus: 'missing' }
+
+export async function classifyAgainstGold(
   athleteName: string,
   draft: ReportDraft,
-): Promise<Confidence | undefined> {
-  if (!hasGoldLetter(athleteName)) return undefined
+): Promise<GoldClassification> {
+  if (!hasGoldLetter(athleteName)) return { goldStatus: 'missing' }
   const live = flattenDraft(draft)
   const gold = goldProse(loadGoldLetter(athleteName))
   const [a, b] = await Promise.all([embed(live), embed(gold)])
   const score = cosine(a, b)
-  return { score, band: bandFromScore(score) }
+  return { goldStatus: 'scored', confidence: { score, band: bandFromScore(score) } }
+}
+
+export async function scoreAgainstGold(
+  athleteName: string,
+  draft: ReportDraft,
+): Promise<Confidence | undefined> {
+  const result = await classifyAgainstGold(athleteName, draft)
+  return result.goldStatus === 'scored' ? result.confidence : undefined
 }

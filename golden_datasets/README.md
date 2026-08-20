@@ -1,6 +1,6 @@
 # Golden dataset
 
-The 12 `*_Combine_Report.pdf` files are the reference letters.
+The 12 `*_Combine_Report.pdf` files are the reference letters. Eval and the desk’s confidence score both use them. An athlete without a file here (a new upload) cannot get a confidence number.
 
 `text/` is extracted from those PDFs for the semantic-drift test (`src/eval/semanticDrift.test.ts`). Re-extract after replacing a PDF:
 

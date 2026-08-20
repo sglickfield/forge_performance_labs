@@ -273,7 +273,7 @@ export function AthletePane({
           ) : null}
         </div>
         <div className="hitl-side">
-          {selected.generateMeta?.confidence ? (
+          {selected.generateMeta ? (
             <div className="confidence-block">
               <div className="confidence-head">
                 <h3>Confidence</h3>
@@ -282,15 +282,22 @@ export function AthletePane({
                     i
                   </button>
                   <span id="confidence-tip" className="tip-bubble" role="tooltip">
-                    How close this draft is to the athlete’s approved gold letter. High is 0.80 and up,
-                    medium 0.70–0.79, low below that. A drift check — not a grade of the coaching.
+                    {selected.generateMeta.goldStatus === 'missing'
+                      ? 'No approved gold letter in golden_datasets for this athlete, so we cannot score drift.'
+                      : 'How close this draft is to the athlete’s approved gold letter — template, Grok, or a later combine date. High is 0.80 and up, medium 0.70–0.79, low below that. A drift check — not a grade of the coaching.'}
                   </span>
                 </span>
               </div>
-              <p className={`confidence-inline ${selected.generateMeta.confidence.band}`}>
-                {confidenceLabel(selected.generateMeta.confidence.band)} ·{' '}
-                {selected.generateMeta.confidence.score.toFixed(3)}
-              </p>
+              {selected.generateMeta.confidence ? (
+                <p className={`confidence-inline ${selected.generateMeta.confidence.band}`}>
+                  {confidenceLabel(selected.generateMeta.confidence.band)} ·{' '}
+                  {selected.generateMeta.confidence.score.toFixed(3)}
+                </p>
+              ) : selected.generateMeta.goldStatus === 'missing' ? (
+                <p className="meta">No gold letter for this athlete.</p>
+              ) : (
+                <p className="meta">Scoring against the gold letter…</p>
+              )}
             </div>
           ) : null}
           {selected.generateMeta ? (

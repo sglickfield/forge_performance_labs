@@ -47,7 +47,8 @@ Notes are first-class facts. They become caveats the coach should keep or delete
 - Recommendations name training *qualities* (sprint work, plyometrics, hip hinge, mobility, retest window). They do not invent sets, reps, diagnoses, or skipped scores.
 - Handbook ranges are recreational-to-competitive, not elite. The overview says so once.
 - After a draft exists, the coach may rate it: **Ready** (would send), **Edited** (rewrote parts), **Rewrite** (would not send). That rating is of the *draft*, not the athlete. It is optional, stays on the desk, and is cleared if they unlock or generate a new draft.
-- A signed letter can be shared as a no-login link (`/a/<token>`). The athlete sees only that letter — not the roster, flags, or rating. The token is the access control. Unlocking unpublishes the link.
+- A signed letter can be shared as a no-login link (`/a/<token>`). The athlete sees only that letter — not the roster, flags, or rating. Unlocking takes the link down.
+- Confidence is how close the draft is to that athlete’s gold PDF, when we have one. It is not a grade of the coaching. New athletes with no gold file show “no gold letter.”
 
 ## Session
 

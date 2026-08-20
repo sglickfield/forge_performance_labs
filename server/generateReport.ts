@@ -11,7 +11,7 @@ import {
 } from '../src/domain/reportSchema.ts'
 import { writeTemplateReport } from '../src/domain/templateWriter.ts'
 import type { Analysis, GenerateMeta, ReportDraft } from '../src/domain/types.ts'
-import { scoreAgainstGold } from './scoreAgainstGold.ts'
+import { classifyAgainstGold } from './scoreAgainstGold.ts'
 
 export interface GenerateRequest {
   analysis: Analysis
@@ -85,9 +85,14 @@ export async function generateReport(
 
 async function withConfidence(athleteName: string, result: GenerateResponse): Promise<GenerateResponse> {
   try {
-    const confidence = await scoreAgainstGold(athleteName, result.draft)
-    if (!confidence) return result
-    return { ...result, meta: { ...result.meta, confidence } }
+    const classified = await classifyAgainstGold(athleteName, result.draft)
+    if (classified.goldStatus === 'missing') {
+      return { ...result, meta: { ...result.meta, goldStatus: 'missing' } }
+    }
+    return {
+      ...result,
+      meta: { ...result.meta, confidence: classified.confidence, goldStatus: 'scored' },
+    }
   } catch {
     return result
   }

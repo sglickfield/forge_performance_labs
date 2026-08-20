@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import type { Confidence } from '../domain/confidence.ts'
 import { ParseError, parseAthleteExport, parseAthleteFile } from '../domain/parseAthlete.ts'
 import { publicLetterFrom } from '../domain/publicLetter.ts'
 import type {
@@ -14,6 +15,8 @@ import {
   clearSession,
   rateAthlete,
   roster,
+  applyConfidenceResults,
+  seedTemplateDrafts,
   selectCombine,
   setCoachName,
   setDraft,
@@ -31,7 +34,7 @@ export function Desk({
   grokReady,
 }: {
   session: CombineSession
-  onSession: (next: CombineSession) => void
+  onSession: Dispatch<SetStateAction<CombineSession>>
   grokReady: boolean | null
 }) {
   const athletes = useMemo(() => roster(session), [session])
@@ -51,6 +54,7 @@ export function Desk({
   } | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const didHydrateFiles = useRef(false)
+  const confidenceDone = useRef(new Set<string>())
 
   function openUpload() {
     document.getElementById('file')?.click()
@@ -82,6 +86,53 @@ export function Desk({
     })
   }, [athletes.length, onSession, session])
 
+  useEffect(() => {
+    const seeded = seedTemplateDrafts(session)
+    if (seeded !== session) {
+      onSession(seeded)
+      return
+    }
+    const pending = athletes.filter((row) => {
+      if (!row.letter || !row.generateMeta) return false
+      if (row.generateMeta.confidence || row.generateMeta.goldStatus === 'missing') return false
+      const key = `${row.export.athlete.athlete_id}:${row.generateMeta.generatedAt}`
+      return !confidenceDone.current.has(key)
+    })
+    if (pending.length === 0) return
+    const keys = pending.map((row) => `${row.export.athlete.athlete_id}:${row.generateMeta!.generatedAt}`)
+    const controller = new AbortController()
+    void fetch('/api/confidence', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: pending.map((row) => ({
+          athleteId: row.export.athlete.athlete_id,
+          athleteName: row.export.athlete.name,
+          draft: row.letter,
+        })),
+      }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('confidence failed')
+        return (await response.json()) as {
+          scores?: { athleteId: string; confidence: Confidence }[]
+          missing?: string[]
+        }
+      })
+      .then((body) => {
+        for (const key of keys) confidenceDone.current.add(key)
+        const scores = body.scores ?? []
+        const missing = body.missing ?? []
+        if (scores.length === 0 && missing.length === 0) return
+        onSession((prev) => applyConfidenceResults(prev, scores, missing))
+      })
+      .catch((error: { name?: string }) => {
+        if (error?.name === 'AbortError') return
+      })
+    return () => controller.abort()
+  }, [athletes, onSession, session])
+
   async function loadSamples() {
     setError(null)
     try {
@@ -96,9 +147,10 @@ export function Desk({
         files: row.files,
       }))
       if (incoming.length === 0) throw new Error('No athlete files in data/athletes/')
-      const next = await hydrateFiles(upsertExports(session, incoming))
+      const next = seedTemplateDrafts(await hydrateFiles(upsertExports(session, incoming)))
       onSession(next)
       setSelectedId(incoming[0]?.export.athlete.athlete_id ?? null)
+      setNotice(`${incoming.length} drafts ready to review. Redraft any letter to run Grok.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load the sample combine')
     }
@@ -125,7 +177,9 @@ export function Desk({
   }
 
   function commitUpload(exp: AthleteExport, filename: string, action: 'created' | 'replaced' | 'copied' | 'loaded') {
-    const next = upsertExports(session, [{ sourceName: `${exp.athlete.athlete_id}/${filename}`, export: exp }])
+    const next = seedTemplateDrafts(
+      upsertExports(session, [{ sourceName: `${exp.athlete.athlete_id}/${filename}`, export: exp }]),
+    )
     void hydrateFiles(next).then(onSession)
     setSelectedId(exp.athlete.athlete_id)
     const who = `${exp.athlete.name} (${exp.athlete.tested_on})`
@@ -207,7 +261,10 @@ export function Desk({
         error?: string
       }
       if (!response.ok || !body.draft) throw new Error(body.error || 'Generate failed')
-      onSession(setDraft(session, selected.export.athlete.athlete_id, body.draft, structuredClone(body.draft), body.meta))
+      const id = selected.export.athlete.athlete_id
+      const draft = body.draft
+      const meta = body.meta
+      onSession((prev) => setDraft(prev, id, draft, structuredClone(draft), meta))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generate failed')
     } finally {
@@ -272,10 +329,12 @@ export function Desk({
       )
       if (!response.ok) throw new Error('Could not load that combine')
       const exp = parseAthleteExport(await response.json())
-      onSession(
-        upsertExports(session, [
-          { sourceName: `${id}/${filename}`, export: exp, files: slot?.files },
-        ]),
+      onSession((prev) =>
+        seedTemplateDrafts(
+          upsertExports(prev, [
+            { sourceName: `${id}/${filename}`, export: exp, files: slot?.files },
+          ]),
+        ),
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load that combine')
@@ -370,7 +429,7 @@ export function Desk({
                 Twelve athletes tested last week. <em>Most of them are still waiting on a letter.</em>
               </h1>
               <p className="lede">
-                Load the combine. The desk reads the 2019 handbook, flags the messy sheets, and drafts something you would actually sign.
+                Load the combine. The desk reads the 2019 handbook, flags the messy sheets, and drafts every letter so you can review and sign.
               </p>
               <div className="actions">
                 <button type="button" className="solid" onClick={() => void loadSamples()}>

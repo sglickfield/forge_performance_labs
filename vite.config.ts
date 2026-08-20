@@ -9,6 +9,8 @@ import {
   type SaveMode,
 } from './server/athleteStore.ts'
 import { generateReport, type GenerateRequest } from './server/generateReport.ts'
+import { classifyAgainstGold } from './server/scoreAgainstGold.ts'
+import { normalizeDraft } from './src/domain/reportSchema.ts'
 import { publishShare, readShare, unpublishShare } from './server/shareStore.ts'
 import type { PublicLetter } from './src/domain/publicLetter.ts'
 
@@ -92,6 +94,31 @@ function forgeApiPlugin(apiKey: string | undefined) {
           }
           return
         }
+        if (req.method === 'POST' && path === '/api/confidence') {
+          try {
+            const body = await readJson(req)
+            const items = Array.isArray((body as { items?: unknown }).items)
+              ? (body as {
+                  items: { athleteId?: unknown; athleteName?: unknown; draft?: unknown }[]
+                }).items
+              : []
+            const scores: { athleteId: string; confidence: unknown }[] = []
+            const missing: string[] = []
+            for (const item of items) {
+              if (typeof item.athleteId !== 'string' || typeof item.athleteName !== 'string') continue
+              const draft = normalizeDraft(item.draft)
+              if (!draft) continue
+              const classified = await classifyAgainstGold(item.athleteName, draft)
+              if (classified.goldStatus === 'missing') missing.push(item.athleteId)
+              else scores.push({ athleteId: item.athleteId, confidence: classified.confidence })
+            }
+            res.end(JSON.stringify({ scores, missing }))
+          } catch (error) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Bad request' }))
+          }
+          return
+        }
         if (req.method === 'POST' && path === '/api/share') {
           try {
             const shared = publishShare((await readJson(req)) as PublicLetter)
@@ -163,5 +190,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     plugins: [react(), forgeApiPlugin(env.XAI_API_KEY || process.env.XAI_API_KEY)],
+    server: {
+      allowedHosts: true,
+    },
   }
 })

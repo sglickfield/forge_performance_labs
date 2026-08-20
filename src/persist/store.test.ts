@@ -5,9 +5,13 @@ import { writeTemplateReport } from '../domain/templateWriter.ts'
 import type { CombineSession } from '../domain/types.ts'
 import {
   activeRecord,
+  applyConfidenceResults,
   applyFileLists,
+  emptySession,
   rateAthlete,
+  seedTemplateDrafts,
   selectCombine,
+  setConfidences,
   setDraft,
   setShareToken,
   signAthlete,
@@ -159,6 +163,64 @@ describe('coach rating', () => {
     const back = selectCombine(withBoth, 'FPL-0001', '2026-07-14.json')
     expect(activeRecord(back, 'FPL-0001')?.status).toBe('signed')
     expect(activeRecord(back, 'FPL-0001')?.export.athlete.tested_on).toBe('2026-07-14')
+  })
+
+  it('drafts unsigned sheets when the week is seeded and leaves signed letters alone', () => {
+    const exp = parseAthleteExport({
+      athlete: {
+        name: 'Test Athlete',
+        athlete_id: 'FPL-0001',
+        age: 24,
+        sex: 'F',
+        sport: 'Volleyball',
+        tested_on: '2026-07-14',
+      },
+      administration: {
+        facility: 'Ridgeline Athletics',
+        administered_by: 'M. Sandoval',
+        conditions_note: '',
+      },
+      results: [
+        { subtest: 'sprint_40m', raw: 5.5, status: 'completed' },
+        { subtest: 'vertical_jump_cm', raw: null, status: 'skipped', note: 'ankle' },
+      ],
+    })
+    const loaded = upsertExports(emptySession('Alex F'), [
+      { sourceName: 'FPL-0001/2026-07-14.json', export: exp },
+    ])
+    expect(activeRecord(loaded, 'FPL-0001')?.status).toBe('new')
+    const seeded = seedTemplateDrafts(loaded)
+    expect(activeRecord(seeded, 'FPL-0001')?.status).toBe('draft')
+    expect(activeRecord(seeded, 'FPL-0001')?.letter?.overview.length).toBeGreaterThan(20)
+    expect(activeRecord(seeded, 'FPL-0001')?.generateMeta?.source).toBe('template')
+    expect(seedTemplateDrafts(seeded)).toBe(seeded)
+
+    const signed = signAthlete(seeded, 'FPL-0001')
+    expect(seedTemplateDrafts(signed)).toBe(signed)
+  })
+
+  it('stamps gold confidence onto a draft without clearing the letter', () => {
+    const start = sessionWithLetter()
+    const next = setConfidences(start, [
+      { athleteId: 'FPL-0001', confidence: { score: 0.91, band: 'high' } },
+    ])
+    expect(activeRecord(next, 'FPL-0001')?.letter).toEqual(activeRecord(start, 'FPL-0001')?.letter)
+    expect(activeRecord(next, 'FPL-0001')?.generateMeta?.confidence).toEqual({ score: 0.91, band: 'high' })
+    expect(activeRecord(next, 'FPL-0001')?.generateMeta?.goldStatus).toBe('scored')
+  })
+
+  it('stamps confidence onto a signed letter and records a missing gold letter', () => {
+    const signed = signAthlete(sessionWithLetter(), 'FPL-0001')
+    const scored = applyConfidenceResults(
+      signed,
+      [{ athleteId: 'FPL-0001', confidence: { score: 0.88, band: 'high' } }],
+    )
+    expect(activeRecord(scored, 'FPL-0001')?.status).toBe('signed')
+    expect(activeRecord(scored, 'FPL-0001')?.generateMeta?.confidence?.score).toBe(0.88)
+
+    const missing = applyConfidenceResults(sessionWithLetter(), [], ['FPL-0001'])
+    expect(activeRecord(missing, 'FPL-0001')?.generateMeta?.goldStatus).toBe('missing')
+    expect(activeRecord(missing, 'FPL-0001')?.generateMeta?.confidence).toBeUndefined()
   })
 
   it('hydrates extra dates onto an athlete without dropping the active combine', () => {

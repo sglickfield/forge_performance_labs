@@ -4,7 +4,7 @@ How to work in this repo with a human or another agent.
 
 ## Product
 
-Monday-morning coach desk for Forge Performance Labs. Load combine export JSONs, draft a signed athlete letter. Read `docs/DECISIONS.md` and `docs/ASSUMPTIONS.md` before changing behavior.
+Monday-morning coach desk for Forge Performance Labs. Load combine JSON; unsigned sheets auto-draft from the template writer. Redraft is Grok. Read `docs/DECISIONS.md` and `docs/ASSUMPTIONS.md` before changing behavior.
 
 ## Run
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-The desk works without a key: `/api/generate` falls back to the deterministic writer. Live SpaceXAI drafts need `XAI_API_KEY` on the **server** (never `VITE_*`).
+The desk works without a key: load-week drafts and `/api/generate` use the template writer. Live Grok needs `XAI_API_KEY` on the **server** (never `VITE_*`). Prompt version: `forge-report-v4`.
 
 ## Validate (definition of done)
 
@@ -56,7 +56,8 @@ Each run writes a **new** `output/grok-eval-<timestamp>.md` (and `.json`). Fail 
 | Public letter shape | `src/domain/publicLetter.ts` |
 | Disk store + HTTP | `server/athleteStore.ts`, `vite.config.ts` `/api/athletes` |
 | Signed letter share (no login) | `data/share/<token>.json` · `/a/<token>` · `src/ui/AthleteView.tsx` |
-| Grok call + gold cosine | `server/generateReport.ts`, `server/scoreAgainstGold.ts` |
+| Grok + confidence | `server/generateReport.ts`, `server/scoreAgainstGold.ts`, `/api/confidence` |
+| Load-week / upload drafts | `src/persist/store.ts` `seedTemplateDrafts` (then `/api/confidence`) |
 | UI | `src/ui/Desk.tsx` (shell), `src/ui/AthletePane.tsx` (editor), `src/ui/AthleteView.tsx` (share page) |
 | Eval gold letters | `golden_datasets/` |
 | Grok eval runs | `output/grok-eval-<timestamp>.md` (gitignored) |

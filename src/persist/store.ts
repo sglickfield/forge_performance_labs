@@ -1,5 +1,7 @@
 import { analyzeAthlete, sessionPullsFrom } from '../domain/analyze.ts'
-import { normalizeDraft } from '../domain/reportSchema.ts'
+import type { Confidence } from '../domain/confidence.ts'
+import { cleanDraft, normalizeDraft, PROMPT_VERSION } from '../domain/reportSchema.ts'
+import { writeTemplateReport } from '../domain/templateWriter.ts'
 import type {
   Analysis,
   AthleteExport,
@@ -193,6 +195,55 @@ function sameExport(a: AthleteExport, b: AthleteExport): boolean {
 
 export function setCoachName(session: CombineSession, coachName: string): CombineSession {
   return { ...session, coachName }
+}
+
+export function seedTemplateDrafts(session: CombineSession): CombineSession {
+  let next = session
+  let changed = false
+  for (const id of Object.keys(session.athletes)) {
+    const record = activeRecord(next, id)
+    if (!record || record.status === 'signed' || record.draft || record.letter) continue
+    const draft = cleanDraft(writeTemplateReport(record.analysis))
+    next = setDraft(next, id, draft, structuredClone(draft), {
+      source: 'template',
+      model: 'template-writer',
+      promptVersion: PROMPT_VERSION,
+      generatedAt: new Date().toISOString(),
+    })
+    changed = true
+  }
+  return changed ? next : session
+}
+
+export function applyConfidenceResults(
+  session: CombineSession,
+  scores: { athleteId: string; confidence: Confidence }[],
+  missing: string[] = [],
+): CombineSession {
+  let next = session
+  for (const row of scores) {
+    next = patchActive(next, row.athleteId, (record) => {
+      if (!record.generateMeta || record.generateMeta.confidence) return record
+      return {
+        ...record,
+        generateMeta: { ...record.generateMeta, confidence: row.confidence, goldStatus: 'scored' },
+      }
+    })
+  }
+  for (const athleteId of missing) {
+    next = patchActive(next, athleteId, (record) => {
+      if (!record.generateMeta || record.generateMeta.confidence) return record
+      return { ...record, generateMeta: { ...record.generateMeta, goldStatus: 'missing' } }
+    })
+  }
+  return next
+}
+
+export function setConfidences(
+  session: CombineSession,
+  scores: { athleteId: string; confidence: Confidence }[],
+): CombineSession {
+  return applyConfidenceResults(session, scores)
 }
 
 export function setDraft(
