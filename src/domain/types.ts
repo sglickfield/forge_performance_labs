@@ -43,7 +43,7 @@ export interface AthleteExport {
   results: RawResult[]
 }
 
-export type AgeBand = '18_29' | '30_39' | '40_plus'
+export type AgeBand = string
 
 export type Band = 'below' | 'typical' | 'above' | 'skipped' | 'unbenchmarked'
 

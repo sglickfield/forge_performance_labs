@@ -1,0 +1,90 @@
+{
+  "edition": "2019 coach handbook, Appendix C",
+  "typical_of": "recreational-to-competitive adult athletes",
+  "notes": [
+    "Typical range is inclusive [lo, hi]. Mid-thigh pull has no row on purpose.",
+    "Grip and balance ranges apply to either side via applies_to.",
+    "age_max null means that band is open-ended (40+)."
+  ],
+  "metrics": [
+    {
+      "id": "sprint_40m",
+      "unit": "s",
+      "better": "lower",
+      "applies_to": ["sprint_40m"]
+    },
+    {
+      "id": "vertical_jump_cm",
+      "unit": "cm",
+      "better": "higher",
+      "applies_to": ["vertical_jump_cm"]
+    },
+    {
+      "id": "broad_jump_cm",
+      "unit": "cm",
+      "better": "higher",
+      "applies_to": ["broad_jump_cm"]
+    },
+    {
+      "id": "grip_strength_kg",
+      "unit": "kg",
+      "better": "higher",
+      "applies_to": ["grip_strength_left_kg", "grip_strength_right_kg"]
+    },
+    {
+      "id": "sit_reach_cm",
+      "unit": "cm",
+      "better": "higher",
+      "applies_to": ["sit_reach_cm"]
+    },
+    {
+      "id": "balance_s",
+      "unit": "s",
+      "better": "higher",
+      "applies_to": ["balance_left_s", "balance_right_s"]
+    }
+  ],
+  "ranges": [
+    { "metric": "sprint_40m", "sex": "M", "age_min": 18, "age_max": 29, "lo": 4.6, "hi": 5.5 },
+    { "metric": "sprint_40m", "sex": "M", "age_min": 30, "age_max": 39, "lo": 4.8, "hi": 5.7 },
+    { "metric": "sprint_40m", "sex": "M", "age_min": 40, "age_max": null, "lo": 5.1, "hi": 6.1 },
+    { "metric": "sprint_40m", "sex": "F", "age_min": 18, "age_max": 29, "lo": 5.3, "hi": 6.3 },
+    { "metric": "sprint_40m", "sex": "F", "age_min": 30, "age_max": 39, "lo": 5.4, "hi": 6.4 },
+    { "metric": "sprint_40m", "sex": "F", "age_min": 40, "age_max": null, "lo": 5.7, "hi": 6.8 },
+
+    { "metric": "vertical_jump_cm", "sex": "M", "age_min": 18, "age_max": 29, "lo": 44, "hi": 64 },
+    { "metric": "vertical_jump_cm", "sex": "M", "age_min": 30, "age_max": 39, "lo": 41, "hi": 61 },
+    { "metric": "vertical_jump_cm", "sex": "M", "age_min": 40, "age_max": null, "lo": 36, "hi": 55 },
+    { "metric": "vertical_jump_cm", "sex": "F", "age_min": 18, "age_max": 29, "lo": 31, "hi": 47 },
+    { "metric": "vertical_jump_cm", "sex": "F", "age_min": 30, "age_max": 39, "lo": 29, "hi": 45 },
+    { "metric": "vertical_jump_cm", "sex": "F", "age_min": 40, "age_max": null, "lo": 25, "hi": 40 },
+
+    { "metric": "broad_jump_cm", "sex": "M", "age_min": 18, "age_max": 29, "lo": 205, "hi": 260 },
+    { "metric": "broad_jump_cm", "sex": "M", "age_min": 30, "age_max": 39, "lo": 195, "hi": 250 },
+    { "metric": "broad_jump_cm", "sex": "M", "age_min": 40, "age_max": null, "lo": 180, "hi": 235 },
+    { "metric": "broad_jump_cm", "sex": "F", "age_min": 18, "age_max": 29, "lo": 160, "hi": 205 },
+    { "metric": "broad_jump_cm", "sex": "F", "age_min": 30, "age_max": 39, "lo": 155, "hi": 200 },
+    { "metric": "broad_jump_cm", "sex": "F", "age_min": 40, "age_max": null, "lo": 140, "hi": 185 },
+
+    { "metric": "grip_strength_kg", "sex": "M", "age_min": 18, "age_max": 29, "lo": 39, "hi": 56 },
+    { "metric": "grip_strength_kg", "sex": "M", "age_min": 30, "age_max": 39, "lo": 40, "hi": 57 },
+    { "metric": "grip_strength_kg", "sex": "M", "age_min": 40, "age_max": null, "lo": 37, "hi": 54 },
+    { "metric": "grip_strength_kg", "sex": "F", "age_min": 18, "age_max": 29, "lo": 25, "hi": 36 },
+    { "metric": "grip_strength_kg", "sex": "F", "age_min": 30, "age_max": 39, "lo": 25, "hi": 37 },
+    { "metric": "grip_strength_kg", "sex": "F", "age_min": 40, "age_max": null, "lo": 23, "hi": 34 },
+
+    { "metric": "sit_reach_cm", "sex": "M", "age_min": 18, "age_max": 29, "lo": -2, "hi": 14 },
+    { "metric": "sit_reach_cm", "sex": "M", "age_min": 30, "age_max": 39, "lo": -3, "hi": 13 },
+    { "metric": "sit_reach_cm", "sex": "M", "age_min": 40, "age_max": null, "lo": -5, "hi": 11 },
+    { "metric": "sit_reach_cm", "sex": "F", "age_min": 18, "age_max": 29, "lo": 2, "hi": 18 },
+    { "metric": "sit_reach_cm", "sex": "F", "age_min": 30, "age_max": 39, "lo": 1, "hi": 17 },
+    { "metric": "sit_reach_cm", "sex": "F", "age_min": 40, "age_max": null, "lo": -1, "hi": 15 },
+
+    { "metric": "balance_s", "sex": "M", "age_min": 18, "age_max": 29, "lo": 16, "hi": 40 },
+    { "metric": "balance_s", "sex": "M", "age_min": 30, "age_max": 39, "lo": 14, "hi": 38 },
+    { "metric": "balance_s", "sex": "M", "age_min": 40, "age_max": null, "lo": 11, "hi": 33 },
+    { "metric": "balance_s", "sex": "F", "age_min": 18, "age_max": 29, "lo": 18, "hi": 42 },
+    { "metric": "balance_s", "sex": "F", "age_min": 30, "age_max": 39, "lo": 16, "hi": 40 },
+    { "metric": "balance_s", "sex": "F", "age_min": 40, "age_max": null, "lo": 12, "hi": 35 }
+  ]
+}

@@ -1,10 +1,11 @@
 import {
-  SUBTEST_ORDER,
-  TEST_META,
   ageBandFor,
   ageBandLabel,
+  handbookBetter,
+  handbookEdition,
   handbookRange,
-} from './benchmarks.ts'
+} from './handbook.ts'
+import { SUBTEST_ORDER, TEST_META } from './subtests.ts'
 import type {
   Analysis,
   AthleteExport,
@@ -71,7 +72,7 @@ export function analyzeAthlete(exp: AthleteExport, sessionPulls: number[] = []):
   const tests: TestView[] = SUBTEST_ORDER.map((subtest) => {
     const row = lookup(results, subtest)
     const meta = TEST_META[subtest]
-    const range = handbookRange(subtest, athlete.sex, ageBand)
+    const range = handbookRange(subtest, athlete.sex, athlete.age)
     const status = row?.status ?? 'skipped'
     const raw = row?.raw ?? null
     const view: TestView = {
@@ -82,7 +83,7 @@ export function analyzeAthlete(exp: AthleteExport, sessionPulls: number[] = []):
       status,
       note: row?.note,
       range,
-      better: meta.better,
+      better: handbookBetter(subtest),
       band: 'skipped',
     }
     view.band = bandFor(view)
@@ -125,11 +126,11 @@ export function analyzeAthlete(exp: AthleteExport, sessionPulls: number[] = []):
         text: `${test.label} (${formatRaw(test.raw, test.unit)}) sits well outside the ${ageBandLabel(ageBand)} ${athlete.sex} typical range (${test.range.lo}–${test.range.hi} ${test.unit}). Verify before treating it as gospel.`,
       })
     }
-    if (test.subtest === 'midthigh_pull_n' && test.status === 'completed') {
+    if (test.status === 'completed' && !test.range) {
       flags.push({
         kind: 'no_handbook',
         subtest: test.subtest,
-        text: 'Mid-thigh pull is not in the 2019 handbook. No typical range is claimed.',
+        text: `${test.label} is not in the 2019 handbook. No typical range is claimed.`,
       })
     }
   }
@@ -206,7 +207,7 @@ export function factPack(analysis: Analysis): Record<string, unknown> {
     },
     administration: analysis.administration,
     handbook: {
-      edition: '2019 coach handbook, Appendix C',
+      edition: handbookEdition(),
       ageBand: analysis.ageBandLabel,
       sex: analysis.athlete.sex,
     },
