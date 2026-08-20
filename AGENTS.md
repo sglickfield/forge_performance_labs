@@ -51,6 +51,7 @@ Each run writes a **new** `output/grok-eval-<timestamp>.md` (and `.json`). Fail 
 | Deterministic writer | `src/domain/templateWriter.ts` |
 | Grok few-shot (not eval) | `src/domain/promptExample.ts` |
 | Disk store + HTTP | `server/athleteStore.ts`, `vite.config.ts` `/api/athletes` |
+| Signed letter share (no login) | `data/share/<token>.json` · `/a/<token>` · `src/ui/AthleteView.tsx` |
 | Grok call + gold cosine | `server/generateReport.ts`, `server/scoreAgainstGold.ts` |
 | UI | `src/ui/`, `src/App.tsx` |
 | Eval gold letters | `golden_datasets/` |
@@ -60,7 +61,8 @@ Each run writes a **new** `output/grok-eval-<timestamp>.md` (and `.json`). Fail 
 
 - Invent exercise-science claims or a mid-thigh pull handbook range.
 - Let the model see raw export JSON. It gets a fact pack.
-- Auto-send a letter. Signing is the human step.
+- Auto-send a letter. Signing is the human step. Sharing a link is the coach’s choice.
+- Write into `data/share/` from tests. Use a temp dir via `setShareRoot`.
 - Write into `data/athletes/` from tests.
 - Add Supabase / auth / a design system kit.
 - Restyle the athlete letter to look like a SaaS dashboard.

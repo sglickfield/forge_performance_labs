@@ -12,6 +12,7 @@ The only location for combine exports (seed week and later uploads).
 - Uploads are written here (never overwrite: `2026-07-16__2.json` if that date exists).
 - Tests and eval **read** this tree. They must not write here.
 - `golden_datasets/` is eval gold (letters), not input.
+- Signed, shareable letters are `data/share/<token>.json` (gitignored). Not combine input. The athlete page is `/a/<token>`.
 
 ## Handbook
 

@@ -113,6 +113,15 @@ export interface GenerateMeta {
   confidence?: Confidence
 }
 
+export type CoachVerdict = 'ready' | 'edited' | 'rewrite'
+
+export interface CoachRating {
+  verdict: CoachVerdict
+  ratedAt: string
+  promptVersion: string
+  source: DraftSource
+}
+
 export type AthleteStatus = 'new' | 'draft' | 'signed'
 
 export interface AthleteRecord {
@@ -125,6 +134,8 @@ export interface AthleteRecord {
   signedAt?: string
   signedBy?: string
   generateMeta?: GenerateMeta
+  coachRating?: CoachRating
+  shareToken?: string
 }
 
 export interface CombineSession {

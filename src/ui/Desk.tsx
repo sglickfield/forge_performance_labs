@@ -1,16 +1,26 @@
 import { useMemo, useState } from 'react'
+import { COACH_VERDICTS, letterWasEdited, verdictHint } from '../domain/coachRating'
 import { confidenceLabel } from '../domain/confidence'
 import { factCheck } from '../domain/factCheck'
 import { ParseError, parseAthleteExport, parseAthleteFile } from '../domain/parseAthlete'
 import { emptyDraft } from '../domain/reportSchema'
-import type { AthleteExport, AthleteRecord, CombineSession, ReportDraft } from '../domain/types'
+import { athleteSharePath, publicLetterFrom } from '../domain/share'
+import type {
+  AthleteExport,
+  AthleteRecord,
+  CoachVerdict,
+  CombineSession,
+  ReportDraft,
+} from '../domain/types'
 import {
   attentionCount,
   clearSession,
+  rateAthlete,
   roster,
   setCoachName,
   setDraft,
   setLetter,
+  setShareToken,
   signAthlete,
   unlockAthlete,
   upsertExports,
@@ -116,6 +126,48 @@ export function Desk({
     } finally {
       setBusy(false)
     }
+  }
+
+  async function signSelected() {
+    if (!selected) return
+    setError(null)
+    const id = selected.export.athlete.athlete_id
+    const next = signAthlete(session, id)
+    const record = next.athletes[id]
+    if (!record || record.status !== 'signed') {
+      onSession(next)
+      return
+    }
+    try {
+      const response = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(publicLetterFrom(record)),
+      })
+      const body = (await response.json()) as { token?: string; error?: string }
+      if (!response.ok || !body.token) throw new Error(body.error || 'Share failed')
+      onSession(setShareToken(next, id, body.token))
+    } catch (err) {
+      onSession(next)
+      setError(
+        err instanceof Error
+          ? `Signed, but the athlete link could not be created. ${err.message}`
+          : 'Signed, but the athlete link could not be created.',
+      )
+    }
+  }
+
+  async function unlockSelected() {
+    if (!selected) return
+    setError(null)
+    if (selected.shareToken) {
+      try {
+        await fetch(`/api/share/${encodeURIComponent(selected.shareToken)}`, { method: 'DELETE' })
+      } catch {
+        setError('Unlocked locally; the old athlete link may still work until you restart the desk.')
+      }
+    }
+    onSession(unlockAthlete(session, selected.export.athlete.athlete_id))
   }
 
   return (
@@ -225,8 +277,11 @@ export function Desk({
               onCoachNote={setCoachNote}
               onGenerate={() => void generate()}
               onLetter={(letter) => onSession(setLetter(session, selected.export.athlete.athlete_id, letter))}
-              onSign={() => onSession(signAthlete(session, selected.export.athlete.athlete_id))}
-              onUnlock={() => onSession(unlockAthlete(session, selected.export.athlete.athlete_id))}
+              onSign={() => void signSelected()}
+              onRate={(verdict) =>
+                onSession(rateAthlete(session, selected.export.athlete.athlete_id, verdict))
+              }
+              onUnlock={() => void unlockSelected()}
               onClear={() => {
                 onSession(clearSession(session.coachName))
                 setSelectedId(null)
@@ -271,6 +326,7 @@ function AthletePane({
   onGenerate,
   onLetter,
   onSign,
+  onRate,
   onUnlock,
   onClear,
 }: {
@@ -283,12 +339,14 @@ function AthletePane({
   onGenerate: () => void
   onLetter: (letter: ReportDraft) => void
   onSign: () => void
+  onRate: (verdict: CoachVerdict) => void
   onUnlock: () => void
   onClear: () => void
 }) {
   const athlete = selected.export.athlete
   const letter = selected.letter ?? selected.draft ?? emptyDraft()
   const locked = selected.status === 'signed'
+  const sharePath = selected.shareToken ? athleteSharePath(selected.shareToken) : null
   const issues = selected.letter ? factCheck(selected.analysis, selected.letter) : []
 
   function patch<K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) {
@@ -313,6 +371,22 @@ function AthletePane({
           <button type="button" className="ghost" onClick={() => window.print()}>
             Print / PDF
           </button>
+          {locked && sharePath ? (
+            <>
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => {
+                  void navigator.clipboard.writeText(`${window.location.origin}${sharePath}`)
+                }}
+              >
+                Copy athlete link
+              </button>
+              <a className="ghost" href={sharePath} target="_blank" rel="noreferrer">
+                Open athlete page
+              </a>
+            </>
+          ) : null}
           <button type="button" className="danger" onClick={onClear}>
             Clear week
           </button>
@@ -334,7 +408,15 @@ function AthletePane({
 
       <div className="split">
         <div className="letter-wrap">
-          <ReportLetter record={selected} letter={letter} coachName={session.coachName} />
+          <ReportLetter
+            athlete={athlete}
+            administration={selected.export.administration}
+            tests={selected.analysis.tests}
+            ageBandLabel={selected.analysis.ageBandLabel}
+            letter={letter}
+            signedBy={selected.signedBy || session.coachName}
+            signedAt={selected.signedAt}
+          />
           {!locked ? (
             <div className="edit-block">
               <label htmlFor="headline">Edit the report before you sign</label>
@@ -428,6 +510,31 @@ function AthletePane({
               disabled={locked}
               onChange={(event) => onCoachNote(event.target.value)}
             />
+            {selected.letter ? (
+              <div className="rating-block">
+                <p className="meta">How close was this draft to something you would hand over?</p>
+                <div className="choices" role="group" aria-label="Draft rating">
+                  {COACH_VERDICTS.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={selected.coachRating?.verdict === item.id ? 'choice on' : 'choice'}
+                      onClick={() => onRate(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+                {selected.coachRating ? (
+                  <p className="meta">{verdictHint(selected.coachRating.verdict)}</p>
+                ) : (
+                  <p className="meta">Optional — rate before or after you sign.</p>
+                )}
+                {letterWasEdited(selected.draft, selected.letter) ? (
+                  <p className="meta">The letter text differs from the model draft.</p>
+                ) : null}
+              </div>
+            ) : null}
             <div className="row-actions" style={{ marginTop: 10 }}>
               {locked ? (
                 <button type="button" className="ghost" onClick={onUnlock}>

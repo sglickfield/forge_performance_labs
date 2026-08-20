@@ -17,7 +17,8 @@ Open one clean athlete (Maya or Aisha) *and* one messy one (Casey or Taylor). Ge
 - the letter in the coach's voice
 - the coach brief on the side (human in the loop)
 - edit one sentence, type your name, sign
-- flip to the athlete letter / print view
+- copy the athlete link — they see only their letter, no desk
+- flip to Print / PDF if you want a paper copy
 
 **2:10–3:00 — new file**
 Drop a JSON (or re-drop one). This is the live-session requirement. The desk accepts it while running.

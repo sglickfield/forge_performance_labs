@@ -126,6 +126,12 @@ h1, h2, h3, p { margin: 0; }
   background: transparent;
 }
 
+a.ghost {
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .solid {
   background: var(--ink);
   color: var(--paper);
@@ -309,6 +315,46 @@ h1, h2, h3, p { margin: 0; }
   box-shadow: var(--shadow);
 }
 
+.athlete-page {
+  min-height: 100svh;
+  padding: 36px 16px 64px;
+}
+
+.athlete-page .letter-wrap {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.athlete-page .missing {
+  max-width: 28em;
+  margin: 18vh auto 0;
+  text-align: center;
+  display: grid;
+  gap: 12px;
+}
+
+.athlete-page .missing h1 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.athlete-page .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.athlete-foot {
+  max-width: 820px;
+  margin: 16px auto 0;
+  text-align: center;
+}
+
+.athlete-foot a { color: inherit; }
+
 .rail {
   display: grid;
   gap: 16px;
@@ -370,6 +416,34 @@ textarea:focus, .stack input[type='text']:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.rating-block {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.choice {
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  font-size: 13px;
+}
+
+.choice:hover { background: rgba(28, 23, 18, 0.04); }
+
+.choice.on {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 .meta {
@@ -530,9 +604,9 @@ textarea:focus, .stack input[type='text']:focus {
 
 @media print {
   body { background: white; }
-  .topbar, .roster, .rail, .edit-block, .identity .row-actions { display: none !important; }
+  .topbar, .roster, .rail, .edit-block, .identity .row-actions, .athlete-foot { display: none !important; }
   .workspace, .split { display: block; }
   .letter-wrap { border: 0; box-shadow: none; }
-  .athlete { padding: 0; }
+  .athlete, .athlete-page { padding: 0; }
   .scores { display: none; }
 }
