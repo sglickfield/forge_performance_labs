@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { saveExport, SaveConflictError, setAthletesDir } from '../../server/athleteStore.ts'
+import { saveExport, SaveConflictError, setAthletesDir } from './athleteStore.ts'
 
 const sample = {
   athlete: {

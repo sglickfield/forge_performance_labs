@@ -9,7 +9,7 @@ import {
   athleteSharePath,
   publicLetterFrom,
   shareTokenFromPath,
-} from './share.ts'
+} from './publicLetter.ts'
 import { writeTemplateReport } from './templateWriter.ts'
 import type { AthleteRecord } from './types.ts'
 

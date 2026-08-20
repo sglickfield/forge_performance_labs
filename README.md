@@ -27,7 +27,7 @@ bash bin/validate.sh
 - `docs/DECISIONS.md` — V1 vs V-awesome, why JSON, how we know the AI is working
 - `docs/ASSUMPTIONS.md` — handbook rules, skipped tests, mid-thigh pull
 - `docs/LOOM.md` — the 5-minute walkthrough
-- `AGENTS.md` — how a human or agent should work in this repo
+- `docs/AGENTS.md` — how a human or agent should work in this repo
 
 ## Materials
 

@@ -46,14 +46,18 @@ Each run writes a **new** `output/grok-eval-<timestamp>.md` (and `.json`). Fail 
 |---|---|
 | Combine JSON (app, tests, eval — read-only in tests) | `data/athletes/<athlete_id>/<tested_on>.json` |
 | 2019 handbook ranges | `data/forge_coach_handbook_2019_v1.json` (loaded by `src/domain/handbook.ts`) |
-| Export parse + analysis | `src/domain/` |
+| Export parse + analysis | `src/domain/parseAthlete.ts`, `src/domain/analyze.ts` |
+| Handbook load | `src/domain/handbook.ts` |
+| Band labels (test chips) | `src/domain/bandLabels.ts` |
 | Report schema + fact-check | `src/domain/reportSchema.ts`, `src/domain/factCheck.ts` |
 | Deterministic writer | `src/domain/templateWriter.ts` |
 | Grok few-shot (not eval) | `src/domain/promptExample.ts` |
+| Shared format helpers | `src/domain/format.ts` |
+| Public letter shape | `src/domain/publicLetter.ts` |
 | Disk store + HTTP | `server/athleteStore.ts`, `vite.config.ts` `/api/athletes` |
 | Signed letter share (no login) | `data/share/<token>.json` · `/a/<token>` · `src/ui/AthleteView.tsx` |
 | Grok call + gold cosine | `server/generateReport.ts`, `server/scoreAgainstGold.ts` |
-| UI | `src/ui/`, `src/App.tsx` |
+| UI | `src/ui/Desk.tsx` (shell), `src/ui/AthletePane.tsx` (editor), `src/ui/AthleteView.tsx` (share page) |
 | Eval gold letters | `golden_datasets/` |
 | Grok eval runs | `output/grok-eval-<timestamp>.md` (gitignored) |
 

@@ -109,6 +109,4 @@ function inventedMeasurement(text: string, subtest: SubtestId, allowed: Set<stri
   return false
 }
 
-export function firstName(name: string): string {
-  return name.split(/\s+/)[0] ?? name
-}
+

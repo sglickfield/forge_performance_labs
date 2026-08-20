@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { shareTokenFromPath } from './domain/share'
-import type { CombineSession } from './domain/types'
-import { loadSession, saveSession } from './persist/store'
-import { AthleteView } from './ui/AthleteView'
-import { Desk } from './ui/Desk'
+import { shareTokenFromPath } from './domain/publicLetter.ts'
+import type { CombineSession } from './domain/types.ts'
+import { loadSession, saveSession } from './persist/store.ts'
+import { AthleteView } from './ui/AthleteView.tsx'
+import { Desk } from './ui/Desk.tsx'
 
 export default function App() {
   const token = shareTokenFromPath(window.location.pathname)

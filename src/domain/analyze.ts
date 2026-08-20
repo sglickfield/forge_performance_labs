@@ -1,3 +1,4 @@
+import { firstName, formatRaw } from './format.ts'
 import {
   ageBandFor,
   ageBandLabel,
@@ -18,17 +19,6 @@ import type {
 const OUTLIER_PAD = 0.1
 const GRIP_ASYMMETRY = 0.1
 const BALANCE_ASYMMETRY = 0.15
-
-export function formatRaw(raw: number, unit: string): string {
-  const abs = Math.abs(raw)
-  const digits = abs >= 100 || Number.isInteger(raw) ? 0 : abs >= 10 ? 1 : 2
-  const trimmed = raw.toFixed(digits).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1')
-  const negative = trimmed.startsWith('-')
-  const [whole, frac] = (negative ? trimmed.slice(1) : trimmed).split('.')
-  const grouped = (whole ?? '0').replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-  const value = `${negative ? '-' : ''}${grouped}${frac ? `.${frac}` : ''}`
-  return `${value} ${unit}`
-}
 
 function bandFor(test: {
   raw: number | null
@@ -198,7 +188,7 @@ export function factPack(analysis: Analysis): Record<string, unknown> {
   return {
     athlete: {
       name: analysis.athlete.name,
-      firstName: analysis.athlete.name.split(' ')[0],
+      firstName: firstName(analysis.athlete.name),
       age: analysis.athlete.age,
       sex: analysis.athlete.sex,
       sport: analysis.athlete.sport,
