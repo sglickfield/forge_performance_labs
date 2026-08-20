@@ -1,6 +1,13 @@
 import { analyzeAthlete, sessionPullsFrom } from '../domain/analyze'
 import { normalizeDraft } from '../domain/reportSchema'
-import type { Analysis, AthleteExport, AthleteRecord, CombineSession, ReportDraft } from '../domain/types'
+import type {
+  Analysis,
+  AthleteExport,
+  AthleteRecord,
+  CoachVerdict,
+  CombineSession,
+  ReportDraft,
+} from '../domain/types'
 
 const KEY = 'forge.combine.v1'
 
@@ -90,7 +97,14 @@ export function setDraft(
     ...session,
     athletes: {
       ...session.athletes,
-      [athleteId]: { ...record, draft, letter, generateMeta: meta, status: 'draft' },
+      [athleteId]: {
+        ...record,
+        draft,
+        letter,
+        generateMeta: meta,
+        status: 'draft',
+        coachRating: undefined,
+      },
     },
   }
 }
@@ -104,19 +118,64 @@ export function setLetter(session: CombineSession, athleteId: string, letter: Re
   }
 }
 
-export function signAthlete(session: CombineSession, athleteId: string): CombineSession {
+export function signAthlete(
+  session: CombineSession,
+  athleteId: string,
+  verdict?: CoachVerdict,
+): CombineSession {
   const record = session.athletes[athleteId]
   if (!record?.letter || !session.coachName.trim()) return session
+  const rated = verdict ? attachRating(record, verdict) : record
   return {
     ...session,
     athletes: {
       ...session.athletes,
       [athleteId]: {
-        ...record,
+        ...rated,
         status: 'signed',
         signedAt: new Date().toISOString(),
         signedBy: session.coachName.trim(),
       },
+    },
+  }
+}
+
+export function setShareToken(session: CombineSession, athleteId: string, shareToken: string): CombineSession {
+  const record = session.athletes[athleteId]
+  if (!record) return session
+  return {
+    ...session,
+    athletes: {
+      ...session.athletes,
+      [athleteId]: { ...record, shareToken },
+    },
+  }
+}
+
+export function rateAthlete(
+  session: CombineSession,
+  athleteId: string,
+  verdict: CoachVerdict,
+): CombineSession {
+  const record = session.athletes[athleteId]
+  if (!record?.letter) return session
+  return {
+    ...session,
+    athletes: {
+      ...session.athletes,
+      [athleteId]: attachRating(record, verdict),
+    },
+  }
+}
+
+function attachRating(record: AthleteRecord, verdict: CoachVerdict): AthleteRecord {
+  return {
+    ...record,
+    coachRating: {
+      verdict,
+      ratedAt: new Date().toISOString(),
+      promptVersion: record.generateMeta?.promptVersion ?? 'unknown',
+      source: record.generateMeta?.source ?? 'template',
     },
   }
 }
@@ -128,7 +187,14 @@ export function unlockAthlete(session: CombineSession, athleteId: string): Combi
     ...session,
     athletes: {
       ...session.athletes,
-      [athleteId]: { ...record, status: record.letter ? 'draft' : 'new', signedAt: undefined, signedBy: undefined },
+      [athleteId]: {
+        ...record,
+        status: record.letter ? 'draft' : 'new',
+        signedAt: undefined,
+        signedBy: undefined,
+        coachRating: undefined,
+        shareToken: undefined,
+      },
     },
   }
 }

@@ -2,6 +2,8 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { listLatestExports, listSummaries, readExport, saveExport } from './server/athleteStore.ts'
 import { generateReport, type GenerateRequest } from './server/generateReport.ts'
+import { publishShare, readShare, unpublishShare } from './server/shareStore.ts'
+import type { PublicLetter } from './src/domain/share.ts'
 
 function forgeApiPlugin(apiKey: string | undefined) {
   return {
@@ -67,6 +69,39 @@ function forgeApiPlugin(apiKey: string | undefined) {
             res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Bad request' }))
           }
           return
+        }
+        if (req.method === 'POST' && path === '/api/share') {
+          try {
+            const shared = publishShare((await readJson(req)) as PublicLetter)
+            res.end(JSON.stringify({ token: shared.token, path: `/a/${shared.token}` }))
+          } catch (error) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Bad request' }))
+          }
+          return
+        }
+        const shareMatch = path.match(/^\/api\/share\/([^/]+)$/)
+        if (shareMatch) {
+          const token = decodeURIComponent(shareMatch[1]!)
+          if (req.method === 'GET') {
+            try {
+              res.end(JSON.stringify(readShare(token)))
+            } catch {
+              res.statusCode = 404
+              res.end(JSON.stringify({ error: 'Not found' }))
+            }
+            return
+          }
+          if (req.method === 'DELETE') {
+            try {
+              unpublishShare(token)
+              res.end(JSON.stringify({ ok: true }))
+            } catch {
+              res.statusCode = 404
+              res.end(JSON.stringify({ error: 'Not found' }))
+            }
+            return
+          }
         }
         res.statusCode = 404
         res.end(JSON.stringify({ error: 'Not found' }))

@@ -31,4 +31,4 @@ bash bin/validate.sh
 
 ## Materials
 
-`data/athletes/<athlete_id>/<tested_on>.json` is the only combine store (desk, tests, eval). Tests are read-only on that tree. `data/forge_coach_handbook_2019_v1.json` is the 2019 range table. `golden_datasets/` holds reference PDFs for eval. `src/domain/promptExample.ts` is the Grok few-shot, not eval gold.
+`data/athletes/<athlete_id>/<tested_on>.json` is the only combine store (desk, tests, eval). Tests are read-only on that tree. `data/forge_coach_handbook_2019_v1.json` is the 2019 range table. After sign, the coach can copy `/a/<token>` — the athlete sees only their letter. `golden_datasets/` holds reference PDFs for eval. `src/domain/promptExample.ts` is the Grok few-shot, not eval gold.

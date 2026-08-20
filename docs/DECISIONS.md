@@ -64,6 +64,8 @@ The human is in the loop **before the letter exists for the athlete**, not after
 - Auto-send is not.
 - Flags (skipped tests, tester notes, wild outliers, L/R splits) are shown next to the letter, not buried.
 - Signing is an explicit action and stamps the coach's name.
+- A three-way draft rating (ready / edited / rewrite) is the coach's quality signal. It does not change the letter or the model in V1.
+- Sharing is opt-in: the coach copies a token URL after sign. No accounts. The letter JSON lives under `data/share/` (gitignored), not in combine exports.
 
 That is the V1 guardrail. Not a content-moderation stack.
 

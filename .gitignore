@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 .cache
 output
+data/share/*.json
 dist
 dist-ssr
 *.local

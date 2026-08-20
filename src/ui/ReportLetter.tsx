@@ -1,18 +1,23 @@
 import { interpretation, rangeLabel, ratingLabel, resultLabel } from '../domain/ratings'
-import type { AthleteRecord, ReportDraft } from '../domain/types'
+import type { Administration, AthleteIdentity, ReportDraft, TestView } from '../domain/types'
 
 export function ReportLetter({
-  record,
+  athlete,
+  administration,
+  tests,
+  ageBandLabel,
   letter,
-  coachName,
+  signedBy,
+  signedAt,
 }: {
-  record: AthleteRecord
+  athlete: AthleteIdentity
+  administration: Administration
+  tests: TestView[]
+  ageBandLabel: string
   letter: ReportDraft
-  coachName: string
+  signedBy: string
+  signedAt?: string
 }) {
-  const athlete = record.export.athlete
-  const admin = record.export.administration
-  const signedBy = record.signedBy || coachName
   const sexWord = athlete.sex === 'F' ? 'Female' : 'Male'
 
   return (
@@ -41,13 +46,15 @@ export function ReportLetter({
           <tr>
             <td>Sport: {athlete.sport}</td>
             <td>Tested: {athlete.tested_on}</td>
-            <td>{admin.facility}</td>
+            <td>{administration.facility}</td>
           </tr>
         </tbody>
       </table>
       <p className="admin-line">
-        Administered by {admin.administered_by}
-        {admin.conditions_note ? ` · Conditions: ${admin.conditions_note}` : ' · Conditions: standard indoor testing environment'}
+        Administered by {administration.administered_by}
+        {administration.conditions_note
+          ? ` · Conditions: ${administration.conditions_note}`
+          : ' · Conditions: standard indoor testing environment'}
       </p>
 
       <h2>Performance overview</h2>
@@ -59,13 +66,15 @@ export function ReportLetter({
           <tr>
             <th>Test</th>
             <th>Result</th>
-            <th>Typical range ({athlete.sex}, {record.analysis.ageBandLabel})</th>
+            <th>
+              Typical range ({athlete.sex}, {ageBandLabel})
+            </th>
             <th>Rating</th>
             <th>Interpretation</th>
           </tr>
         </thead>
         <tbody>
-          {record.analysis.tests.map((test) => (
+          {tests.map((test) => (
             <tr key={test.subtest}>
               <td>{test.label}</td>
               <td>
@@ -80,7 +89,7 @@ export function ReportLetter({
           ))}
         </tbody>
       </table>
-      {record.analysis.tests.some((test) => test.subtest === 'midthigh_pull_n') ? (
+      {tests.some((test) => test.subtest === 'midthigh_pull_n') ? (
         <p className="table-note">
           Mid-thigh pull (isometric force) is not covered in the 2019 handbook; the recorded value is
           provided for longitudinal tracking.
@@ -134,11 +143,11 @@ export function ReportLetter({
         <div className="name">{signedBy || '________________'}</div>
         <div className="role">
           Coach · Forge Performance Labs
-          {record.signedAt ? ` · signed ${record.signedAt.slice(0, 10)}` : ' · unsigned draft'}
+          {signedAt ? ` · signed ${signedAt.slice(0, 10)}` : ' · unsigned draft'}
         </div>
         <div className="role">
           {letter.headline ? `${letter.headline} · ` : ''}
-          {admin.facility} · Confidential athlete data
+          {administration.facility} · Confidential athlete data
         </div>
       </div>
     </article>
