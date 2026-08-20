@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { listLatestExports, listSummaries, readExport, saveExport } from './server/athleteStore.ts'
 import { generateReport, type GenerateRequest } from './server/generateReport.ts'
 
 function forgeApiPlugin(apiKey: string | undefined) {
@@ -15,12 +16,48 @@ function forgeApiPlugin(apiKey: string | undefined) {
           next()
           return
         }
+        const path = req.url.split('?')[0] ?? ''
         res.setHeader('Content-Type', 'application/json')
-        if (req.method === 'GET' && req.url === '/api/status') {
+        if (req.method === 'GET' && path === '/api/status') {
           res.end(JSON.stringify({ grok: Boolean(apiKey), model: 'grok-4.6' }))
           return
         }
-        if (req.method === 'POST' && req.url === '/api/generate') {
+        if (req.method === 'GET' && path === '/api/athletes') {
+          res.end(JSON.stringify({ athletes: listSummaries() }))
+          return
+        }
+        if (req.method === 'GET' && path === '/api/athletes/latest') {
+          res.end(JSON.stringify({
+            athletes: listLatestExports().map((item) => ({
+              sourceName: item.sourceName,
+              export: item.export,
+            })),
+          }))
+          return
+        }
+        const fileMatch = path.match(/^\/api\/athletes\/([^/]+)\/([^/]+)$/)
+        if (req.method === 'GET' && fileMatch) {
+          try {
+            const exp = readExport(decodeURIComponent(fileMatch[1]!), decodeURIComponent(fileMatch[2]!))
+            res.end(JSON.stringify(exp))
+          } catch (error) {
+            res.statusCode = 404
+            res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Not found' }))
+          }
+          return
+        }
+        if (req.method === 'POST' && path === '/api/athletes') {
+          try {
+            const body = await readJson(req)
+            const saved = saveExport(body)
+            res.end(JSON.stringify(saved))
+          } catch (error) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Bad request' }))
+          }
+          return
+        }
+        if (req.method === 'POST' && path === '/api/generate') {
           try {
             const body = await readJson(req)
             const result = await generateReport(body as GenerateRequest, apiKey)

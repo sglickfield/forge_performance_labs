@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { confidenceLabel } from '../domain/confidence'
 import { factCheck } from '../domain/factCheck'
 import { ParseError, parseAthleteExport, parseAthleteFile } from '../domain/parseAthlete'
-import { SAMPLE_FILES } from '../domain/samples'
 import { emptyDraft } from '../domain/reportSchema'
 import type { AthleteExport, AthleteRecord, CombineSession, ReportDraft } from '../domain/types'
 import {
@@ -47,12 +46,16 @@ export function Desk({
   async function loadSamples() {
     setError(null)
     try {
-      const incoming: { sourceName: string; export: AthleteExport }[] = []
-      for (const name of SAMPLE_FILES) {
-        const response = await fetch(`/samples/athletes/${name}`)
-        if (!response.ok) throw new Error(`Could not load ${name}`)
-        incoming.push({ sourceName: name, export: parseAthleteExport(await response.json()) })
+      const response = await fetch('/api/athletes/latest')
+      if (!response.ok) throw new Error('Could not load athletes from data/')
+      const body = (await response.json()) as {
+        athletes?: { sourceName: string; export: AthleteExport }[]
       }
+      const incoming = (body.athletes ?? []).map((row) => ({
+        sourceName: row.sourceName,
+        export: parseAthleteExport(row.export),
+      }))
+      if (incoming.length === 0) throw new Error('No athlete files in data/athletes/')
       const next = upsertExports(session, incoming)
       onSession(next)
       setSelectedId(incoming[0]?.export.athlete.athlete_id ?? null)
@@ -66,7 +69,18 @@ export function Desk({
     const incoming: { sourceName: string; export: AthleteExport }[] = []
     try {
       for (const file of Array.from(files)) {
-        incoming.push({ sourceName: file.name, export: await parseAthleteFile(file) })
+        const parsed = await parseAthleteFile(file)
+        const saved = await fetch('/api/athletes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsed),
+        })
+        const body = (await saved.json()) as { error?: string; athlete_id?: string; filename?: string }
+        if (!saved.ok) throw new Error(body.error || `Could not save ${file.name}`)
+        incoming.push({
+          sourceName: `${body.athlete_id}/${body.filename}`,
+          export: parsed,
+        })
       }
       const next = upsertExports(session, incoming)
       onSession(next)

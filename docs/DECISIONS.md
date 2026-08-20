@@ -22,34 +22,35 @@ V1 is **not** a multi-tenant SaaS, a training OS, a historical athlete record, o
 
 ## Storage
 
-**V1: JSON in localStorage**, plus the files the coach uploads. No database process.
+**V1:** combine JSON on disk under `data/athletes/<athlete_id>/<tested_on>.json`. Drafts/signatures stay in localStorage. No database process.
 
-Why not SQLite: twelve athletes, one session, a reviewer who should not stand up Postgres or even `better-sqlite3`. JSON is the honest light path. SQLite would add a native dependency and a migration story we do not need this week.
+Why not SQLite: a folder per athlete is enough for this week’s files and later uploads. Reviewers clone the repo and run; they do not stand up Postgres. New drops never overwrite: a second file on the same date is `2026-07-16__2.json`. The desk loads the latest date per athlete.
 
 **V-awesome:** Postgres (Neon / RDS) for combines, reports, prompt versions, and eval traces. Object store for the original export files. The upload UX stays the same.
 
 ## Inference
 
-**V1:** one structured completion against SpaceXAI (`grok-4.6` via `https://api.x.ai/v1`).
+**V1:** one structured completion against SpaceXAI (`grok-4.6` via `https://api.x.ai/v1/chat/completions`). Prompt version: `forge-report-v3` in `src/domain/reportSchema.ts`.
 
 Pipeline, on purpose:
 
 1. Deterministic analysis turns an export + the 2019 handbook into a **fact pack** (bands, flags, notes, cohort rank for mid-thigh pull).
-2. The model sees only the fact pack. It is not asked to interpret raw files or invent exercise science.
-3. Output is constrained to a JSON schema (`forge-report-v1`).
-4. A fact-checker rejects drafts that invent skipped-test numbers or drop required caveats.
-5. If `XAI_API_KEY` is missing or the call fails, the same fact pack runs through a deterministic writer so the desk still works in a live session.
+2. The model sees only the fact pack, plus a few-shot **prompt example** (`src/domain/promptExample.ts`). That example is not the eval gold.
+3. Output is constrained to a JSON schema (overview, takeaways, recommendations, caveats, coach brief).
+4. A fact-checker rejects drafts that invent skipped-test numbers or drop required caveats. `cleanDraft()` strips empty-sheet caveats.
+5. If `XAI_API_KEY` is missing or the call fails, the same fact pack runs through `templateWriter.ts` so the desk still works in a live session.
 6. The coach must edit/sign. Nothing is sent to an athlete without that step.
+
+**Eval gold** is `golden_datasets/*.pdf` — human-approved letters. Semantic scoring against those files (when present on a branch) is how we notice the writer drifting. Do not confuse that folder with the prompt example.
 
 **What we are ready to defend**
 
-- Demo inference is "facts first, short structured letter, human signs."
-- We know a draft is *structurally* ok because of schema + fact-check + golden fixtures (Casey must not get jump scores).
-- We do **not** yet know a draft is *good coaching*. That is the coach's job in V1.
+- Demo inference is "facts first, structured report, human signs."
+- We know a draft is *structurally* ok because of schema + fact-check + Casey must not get jump scores.
+- Similarity to gold PDFs is a confidence signal, not a proof of good coaching. The coach still signs.
 
 **V-awesome**
 
-- A golden set of coach-approved letters, scored on a rubric (mention skipped tests, no invented numbers, sport-appropriate focus).
 - Prompt/version registry; every signed letter stores `{promptVersion, model, factHash, coachEdits}`.
 - Regression evals on every prompt change. "Working over time" = eval suite + edit-distance from the draft the coach actually signed.
 - Per-coach style memory once we have enough signed letters.
@@ -75,7 +76,7 @@ The athlete letter is the product surface, not a dashboard of cards. Coach chrom
 - `AGENTS.md` — how to run, where truth lives, what not to invent.
 - `docs/ASSUMPTIONS.md` — exercise-science and product assumptions.
 - `docs/LOOM.md` — the 5-minute story, written before the recording.
-- `bin/validate.sh` — lint, typecheck, unit tests. Definition of done.
+- `bin/validate.sh` — lint, typecheck, unit tests. Definition of done. Root `validate.sh` just execs this.
 
 ## Corners we cut on purpose
 

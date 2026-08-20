@@ -3,15 +3,13 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { analyzeAthlete } from '../domain/analyze.ts'
-import { parseAthleteExport } from '../domain/parseAthlete.ts'
-import { SAMPLE_FILES } from '../domain/samples.ts'
 import { writeTemplateReport } from '../domain/templateWriter.ts'
+import { listLatestExports } from '../../server/athleteStore.ts'
 import { cosine, embed, EMBEDDING_MODEL } from './embed.ts'
 import { goldProse, listGoldLetters, loadGoldLetter } from './goldReports.ts'
 import { flattenDraft } from './reportText.ts'
 
 const root = dirname(fileURLToPath(import.meta.url))
-const materials = join(root, '../../forge-candidate-materials/athletes')
 
 interface BaselineFile {
   model: string
@@ -22,16 +20,11 @@ interface BaselineFile {
 
 const baselines = JSON.parse(readFileSync(join(root, 'baselines.json'), 'utf8')) as BaselineFile
 
-function loadExport(name: string) {
-  return parseAthleteExport(JSON.parse(readFileSync(join(materials, name), 'utf8')))
-}
-
 describe('semantic drift (local MiniLM embeddings)', () => {
   it('uses one gold PDF letter per sample athlete', () => {
-    const expected = SAMPLE_FILES.map((file) => {
-      const exp = loadExport(file)
-      return `${exp.athlete.name.replace(/\s+/g, '_')}_Combine_Report.txt`
-    }).sort()
+    const expected = listLatestExports().map(
+      (item) => `${item.export.athlete.name.replace(/\s+/g, '_')}_Combine_Report.txt`,
+    ).sort()
     expect(listGoldLetters()).toEqual(expected)
   })
 
@@ -39,8 +32,8 @@ describe('semantic drift (local MiniLM embeddings)', () => {
     expect(baselines.model).toBe(EMBEDDING_MODEL)
     const rows: { id: string; score: number; baseline: number }[] = []
 
-    for (const file of SAMPLE_FILES) {
-      const exp = loadExport(file)
+    for (const item of listLatestExports()) {
+      const exp = item.export
       const id = exp.athlete.name
       const draft = writeTemplateReport(analyzeAthlete(exp), 'Alex F')
       const current = flattenDraft(draft)

@@ -1,5 +1,8 @@
-/** Quality bar: a finished combine report a coach would hand over. Not a template to copy numbers from. */
-export const GOLD_REPORT_EXAMPLE = `
+/**
+ * Few-shot example stuffed into the Grok prompt (quality/length bar).
+ * Not the eval gold — that is golden_datasets/*.pdf.
+ */
+export const PROMPT_EXAMPLE = `
 HEADLINE
 Standout explosive speed and power
 
