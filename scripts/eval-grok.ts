@@ -3,15 +3,13 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { generateReport } from '../server/generateReport.ts'
 import { analyzeAthlete, sessionPullsFrom } from '../src/domain/analyze.ts'
-import { parseAthleteExport } from '../src/domain/parseAthlete.ts'
-import { SAMPLE_FILES } from '../src/domain/samples.ts'
+import { listLatestExports } from '../server/athleteStore.ts'
 import { cosine, embed, EMBEDDING_MODEL } from '../src/eval/embed.ts'
 import { goldProse, loadGoldLetter } from '../src/eval/goldReports.ts'
 import { flattenDraft } from '../src/eval/reportText.ts'
 import type { GenerateMeta, ReportDraft } from '../src/domain/types.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const athletesDir = join(root, 'forge-candidate-materials/athletes')
 const outDir = join(root, 'output')
 const FLOOR = JSON.parse(readFileSync(join(root, 'src/eval/baselines.json'), 'utf8')).floor as number
 
@@ -89,15 +87,14 @@ async function main() {
   const jsonPath = join(outDir, `grok-eval-${runId}.json`)
   const mdPath = join(outDir, `grok-eval-${runId}.md`)
 
-  const exports = SAMPLE_FILES.map((name) =>
-    parseAthleteExport(JSON.parse(readFileSync(join(athletesDir, name), 'utf8'))),
-  )
+  const loaded = listLatestExports()
+  const exports = loaded.map((item) => item.export)
   const pulls = sessionPullsFrom(exports)
   const rows: CaseResult[] = []
 
-  for (let i = 0; i < SAMPLE_FILES.length; i += 1) {
-    const file = SAMPLE_FILES[i]!
-    const exp = exports[i]!
+  for (const item of loaded) {
+    const file = item.sourceName
+    const exp = item.export
     const name = exp.athlete.name
     process.stderr.write(`Grok ${name}...\n`)
     try {

@@ -15,7 +15,7 @@ type HandbookKey =
 
 /**
  * 2019 coach handbook Appendix C, mirrored from
- * forge-candidate-materials/benchmarks.csv. Mid-thigh pull is intentionally absent.
+ * data/benchmarks.csv. Mid-thigh pull is intentionally absent.
  */
 const HANDBOOK: Record<HandbookKey, Record<Sex, Record<AgeBand, HandbookRange>>> = {
   sprint_40m: {

@@ -12,7 +12,7 @@ cp .env.example .env   # optional: add XAI_API_KEY for live Grok drafts
 npm run dev
 ```
 
-Open the URL Vite prints. Click **Load this week's combine**, or drop any athlete JSON in the Forge export format.
+Open the URL Vite prints. Click **Load this week's combine** (reads `data/athletes/`, latest file per athlete), or drop a Forge JSON — uploads are written to `data/athletes/<id>/<tested_on>.json`.
 
 Without `XAI_API_KEY` the desk still writes letters from the same fact pack (deterministic writer). With a key, drafts go through `grok-4.6` at `api.x.ai`, then a fact-check.
 
@@ -31,4 +31,4 @@ bash bin/validate.sh
 
 ## Materials
 
-`forge-candidate-materials/` is the original packet. A copy lives in `public/samples/` so the running app can load the week and accept new files later.
+`data/athletes/<athlete_id>/<tested_on>.json` is the only combine store (desk, tests, eval). Tests are read-only on that tree. `golden_datasets/` holds reference PDFs for eval. `src/domain/promptExample.ts` is the Grok few-shot, not eval gold.

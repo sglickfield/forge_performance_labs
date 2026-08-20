@@ -3,12 +3,10 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { generateReport } from '../server/generateReport.ts'
 import { analyzeAthlete, sessionPullsFrom } from '../src/domain/analyze.ts'
-import { parseAthleteExport } from '../src/domain/parseAthlete.ts'
-import { SAMPLE_FILES } from '../src/domain/samples.ts'
+import { listLatestExports } from '../server/athleteStore.ts'
 import type { ReportDraft } from '../src/domain/types.ts'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const athletesDir = join(root, 'forge-candidate-materials/athletes')
 const outDir = join(root, 'output')
 const outPath = join(outDir, 'all-sample-reports.md')
 
@@ -52,9 +50,8 @@ function save(chunks: string[]) {
 async function main() {
   const apiKey = loadApiKey()
   mkdirSync(outDir, { recursive: true })
-  const exports = SAMPLE_FILES.map((name) =>
-    parseAthleteExport(JSON.parse(readFileSync(join(athletesDir, name), 'utf8'))),
-  )
+  const loaded = listLatestExports()
+  const exports = loaded.map((item) => item.export)
   const pulls = sessionPullsFrom(exports)
 
   const chunks: string[] = [
@@ -65,9 +62,9 @@ async function main() {
   ]
   save(chunks)
 
-  for (let i = 0; i < SAMPLE_FILES.length; i += 1) {
-    const name = SAMPLE_FILES[i]!
-    const exp = exports[i]!
+  for (const item of loaded) {
+    const name = item.sourceName
+    const exp = item.export
     const analysis = analyzeAthlete(exp, pulls)
     process.stderr.write(`Generating ${exp.athlete.name} (${name})...\n`)
     try {

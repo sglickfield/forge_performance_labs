@@ -1,4 +1,4 @@
-import { GOLD_REPORT_EXAMPLE } from './goldReport.ts'
+import { PROMPT_EXAMPLE } from './promptExample.ts'
 import type { ReportDraft, ReportSection } from './types.ts'
 
 export const PROMPT_VERSION = 'forge-report-v3'
@@ -134,7 +134,7 @@ export function userPrompt(facts: Record<string, unknown>, coachName: string, co
 
 Write a report I would be proud to put my name on. Same depth as this example (use it as a quality bar, not a source of this athlete's numbers):
 
-${GOLD_REPORT_EXAMPLE}
+${PROMPT_EXAMPLE}
 
 Signing coach (do not put this name in the report body): ${coachName || '(coach will type their name)'}
 ${extra}
