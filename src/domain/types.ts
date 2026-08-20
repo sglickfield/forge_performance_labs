@@ -1,3 +1,5 @@
+import type { Confidence } from './confidence.ts'
+
 export type Sex = 'M' | 'F'
 
 export type SubtestId =
@@ -108,6 +110,7 @@ export interface GenerateMeta {
   promptVersion: string
   generatedAt: string
   warning?: string
+  confidence?: Confidence
 }
 
 export type AthleteStatus = 'new' | 'draft' | 'signed'

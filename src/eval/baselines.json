@@ -1,0 +1,19 @@
+{
+  "model": "Xenova/all-MiniLM-L6-v2",
+  "floor": 0.65,
+  "maxDrop": 0.08,
+  "cases": {
+    "Aisha Bell": { "baseline": 0.979, "note": "golden_datasets/Aisha_Bell_Combine_Report.pdf" },
+    "Ben Kowalski": { "baseline": 0.799, "note": "golden_datasets/Ben_Kowalski_Combine_Report.pdf" },
+    "Carlos Mendez": { "baseline": 0.801, "note": "golden_datasets/Carlos_Mendez_Combine_Report.pdf" },
+    "Casey Morgan": { "baseline": 0.852, "note": "golden_datasets/Casey_Morgan_Combine_Report.pdf" },
+    "David Oyelaran": { "baseline": 0.843, "note": "golden_datasets/David_Oyelaran_Combine_Report.pdf" },
+    "Grace Lin": { "baseline": 0.833, "note": "golden_datasets/Grace_Lin_Combine_Report.pdf" },
+    "Leo Tanaka": { "baseline": 0.813, "note": "golden_datasets/Leo_Tanaka_Combine_Report.pdf" },
+    "Maya Castillo": { "baseline": 0.799, "note": "golden_datasets/Maya_Castillo_Combine_Report.pdf" },
+    "Nina Petrov": { "baseline": 0.820, "note": "golden_datasets/Nina_Petrov_Combine_Report.pdf" },
+    "Priya Raman": { "baseline": 0.840, "note": "golden_datasets/Priya_Raman_Combine_Report.pdf" },
+    "Sam Rivera": { "baseline": 0.812, "note": "golden_datasets/Sam_Rivera_Combine_Report.pdf" },
+    "Taylor Brooks": { "baseline": 0.861, "note": "golden_datasets/Taylor_Brooks_Combine_Report.pdf" }
+  }
+}

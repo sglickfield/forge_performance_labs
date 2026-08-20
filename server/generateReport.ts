@@ -11,6 +11,7 @@ import {
 } from '../src/domain/reportSchema.ts'
 import { writeTemplateReport } from '../src/domain/templateWriter.ts'
 import type { Analysis, GenerateMeta, ReportDraft } from '../src/domain/types.ts'
+import { scoreAgainstGold } from './scoreAgainstGold.ts'
 
 export interface GenerateRequest {
   analysis: Analysis
@@ -40,7 +41,10 @@ export async function generateReport(
 ): Promise<GenerateResponse> {
   const facts = factPack(req.analysis)
   if (!apiKey) {
-    return fromTemplate(req.analysis, req.coachName, 'No XAI_API_KEY — used the deterministic writer.')
+    return withConfidence(
+      req.analysis.athlete.name,
+      fromTemplate(req.analysis, req.coachName, 'No XAI_API_KEY — used the deterministic writer.'),
+    )
   }
 
   try {
@@ -48,7 +52,7 @@ export async function generateReport(
     const issues = factCheck(req.analysis, draft)
     if (issues.some((issue) => issue.code === 'invented_skip_score')) {
       const fallback = writeTemplateReport(req.analysis, req.coachName)
-      return {
+      return withConfidence(req.analysis.athlete.name, {
         draft: fallback,
         meta: {
           source: 'template',
@@ -58,9 +62,9 @@ export async function generateReport(
           warning: 'Grok draft failed the fact-check (invented a skipped score). Fell back to the deterministic writer.',
         },
         issues: factCheck(req.analysis, fallback),
-      }
+      })
     }
-    return {
+    return withConfidence(req.analysis.athlete.name, {
       draft,
       meta: {
         source: 'grok',
@@ -69,10 +73,23 @@ export async function generateReport(
         generatedAt: new Date().toISOString(),
       },
       issues,
-    }
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Grok request failed'
-    return fromTemplate(req.analysis, req.coachName, `Grok unavailable (${message}). Used the deterministic writer.`)
+    return withConfidence(
+      req.analysis.athlete.name,
+      fromTemplate(req.analysis, req.coachName, `Grok unavailable (${message}). Used the deterministic writer.`),
+    )
+  }
+}
+
+async function withConfidence(athleteName: string, result: GenerateResponse): Promise<GenerateResponse> {
+  try {
+    const confidence = await scoreAgainstGold(athleteName, result.draft)
+    if (!confidence) return result
+    return { ...result, meta: { ...result.meta, confidence } }
+  } catch {
+    return result
   }
 }
 

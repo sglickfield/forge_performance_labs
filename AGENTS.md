@@ -23,7 +23,17 @@ The desk works without a key: `/api/generate` falls back to the deterministic wr
 bash bin/validate.sh
 ```
 
-Lint, `tsc -b`, unit tests. Do not claim a change is done if this fails.
+Lint, `tsc`, unit tests, and local semantic-drift checks (`src/eval/`). First run downloads `Xenova/all-MiniLM-L6-v2` into `.cache/huggingface` (gitignored). Do not claim a change is done if this fails.
+
+If you intentionally change the **template** voice, update `src/eval/baselines.json` in the same commit.
+
+Live Grok vs the same gold PDFs is a separate run (not every save):
+
+```bash
+npm run test:grok
+```
+
+Each invocation writes a **new** `output/grok-eval-<timestamp>.md` (and `.json`). Nothing is overwritten. Fail if any Grok letter scores below the shared floor (0.65) against `golden_datasets/`. No second baseline file — compare runs by diffing those timestamped files. Skips with exit 0 if `XAI_API_KEY` is missing.
 
 ## Where truth lives
 
@@ -37,6 +47,8 @@ Lint, `tsc -b`, unit tests. Do not claim a change is done if this fails.
 | Prompt / schema version | `PROMPT_VERSION` in `src/domain/reportSchema.ts` |
 | UI | `src/ui/`, `src/App.tsx` |
 | Sample combine | `public/samples/` |
+| Semantic drift gold + floors | `golden_datasets/` (PDFs), `src/eval/baselines.json` |
+| Grok eval runs | `output/grok-eval-<timestamp>.md` (gitignored) |
 
 ## Do not
 

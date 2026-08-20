@@ -8,7 +8,7 @@ npm run lint
 echo "📐 Step 2: Running Type Checker..."
 npm run typecheck
 
-echo "🧪 Step 3: Running Unit Test Suite..."
+echo "🧪 Step 3: Running Unit + Semantic Drift Tests..."
 npm run test
 
 echo "✅ All guardrails passed successfully!"
