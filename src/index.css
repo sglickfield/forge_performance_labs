@@ -329,6 +329,20 @@ h1, h2, h3, p { margin: 0; }
   font-weight: 500;
 }
 
+.confidence-band {
+  font-family: var(--serif);
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  margin: 4px 0 8px;
+}
+
+.confidence.high { box-shadow: inset 3px 0 0 var(--moss); }
+.confidence.high .confidence-band { color: var(--moss); }
+.confidence.medium { box-shadow: inset 3px 0 0 var(--brass); }
+.confidence.medium .confidence-band { color: var(--brass); }
+.confidence.low { box-shadow: inset 3px 0 0 var(--clay); }
+.confidence.low .confidence-band { color: var(--clay); }
+
 .flags { display: grid; gap: 8px; }
 
 .flag {

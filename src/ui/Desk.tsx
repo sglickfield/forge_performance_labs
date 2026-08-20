@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { confidenceLabel } from '../domain/confidence'
 import { factCheck } from '../domain/factCheck'
 import { ParseError, parseAthleteExport, parseAthleteFile } from '../domain/parseAthlete'
 import { SAMPLE_FILES } from '../domain/samples'
@@ -356,6 +357,21 @@ function AthletePane({
         </div>
 
         <aside className="rail">
+          {selected.generateMeta?.confidence ? (
+            <div className={`card confidence ${selected.generateMeta.confidence.band}`}>
+              <h3>Confidence vs gold letter</h3>
+              <p className="confidence-band">{confidenceLabel(selected.generateMeta.confidence.band)}</p>
+              <p className="meta">
+                Cosine {selected.generateMeta.confidence.score.toFixed(3)} against this athlete’s
+                golden dataset PDF. High ≥ 0.80 · medium 0.70–0.79 · low &lt; 0.70.
+              </p>
+            </div>
+          ) : selected.letter ? (
+            <div className="card">
+              <h3>Confidence vs gold letter</h3>
+              <p className="meta">No golden PDF for this athlete — score shows after a draft when a match exists in golden_datasets/.</p>
+            </div>
+          ) : null}
           <div className="card">
             <h3>Flags for you, not the athlete</h3>
             <div className="flags">
