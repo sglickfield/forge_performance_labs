@@ -26,7 +26,6 @@ function renderDraft(draft: ReportDraft): string {
   if (draft.caveats.length) {
     parts.push('### Caveats\n', ...draft.caveats.map((item) => `- ${item}\n`))
   }
-  parts.push(section('Coach brief (internal)', draft.coach_brief))
   return parts.join('\n')
 }
 

@@ -26,7 +26,7 @@ function sessionWithLetter(): CombineSession {
     ],
   })
   const analysis = analyzeAthlete(exp)
-  const draft = writeTemplateReport(analysis, 'Alex F')
+  const draft = writeTemplateReport(analysis)
   return {
     version: 1,
     coachName: 'Alex F',

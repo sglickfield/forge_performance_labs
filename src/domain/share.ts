@@ -31,7 +31,7 @@ export function shareTokenFromPath(pathname: string): string | null {
   return match?.[1] ?? null
 }
 
-/** Athlete-facing copy: no coach brief, no flags, no ratings. */
+/** Athlete-facing copy: no flags, ratings, or desk chrome. */
 export function publicLetterFrom(record: AthleteRecord): PublicLetter {
   if (!record.letter) throw new Error('No letter to share')
   if (record.status !== 'signed' || !record.signedAt || !record.signedBy) {
@@ -42,7 +42,7 @@ export function publicLetterFrom(record: AthleteRecord): PublicLetter {
     administration: record.export.administration,
     ageBandLabel: record.analysis.ageBandLabel,
     tests: record.analysis.tests,
-    letter: { ...record.letter, coach_brief: '' },
+    letter: record.letter,
     signedAt: record.signedAt,
     signedBy: record.signedBy,
   }

@@ -13,7 +13,6 @@ function draftText(draft: ReportDraft): string {
     ...draft.takeaways.flatMap((section) => [section.heading, section.body]),
     ...draft.recommendations.flatMap((section) => [section.heading, section.body]),
     ...draft.caveats,
-    draft.coach_brief,
   ]
     .join('\n')
     .toLowerCase()
@@ -31,10 +30,6 @@ export function factCheck(analysis: Analysis, draft: ReportDraft): FactCheckIssu
   if (draft.recommendations.filter((section) => section.body.trim()).length < 1) {
     issues.push({ code: 'empty_focus', message: 'Need at least one recommendation.' })
   }
-  if (!draft.coach_brief.trim()) {
-    issues.push({ code: 'empty_brief', message: 'Coach brief is empty — the human needs a side note.' })
-  }
-
   const skipped = analysis.tests.filter((test) => test.status === 'skipped')
   if (skipped.length > 0 && draft.caveats.every((item) => !item.trim())) {
     issues.push({ code: 'missing_skip_caveat', message: 'Skipped tests must appear in caveats.' })
@@ -69,7 +64,7 @@ export function factCheck(analysis: Analysis, draft: ReportDraft): FactCheckIssu
     if (!/verif|check|mistime|outlier|unusual|question/i.test(text)) {
       issues.push({
         code: 'unmentioned_outlier',
-        message: 'A verify-outlier flag never made it into the report or coach brief.',
+        message: 'A verify-outlier flag never made it into the report.',
       })
     }
   }

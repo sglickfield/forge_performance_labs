@@ -12,7 +12,7 @@ const SUPPORT = new Set([
   'balance_right_s',
 ])
 
-export function writeTemplateReport(analysis: Analysis, coachName: string): ReportDraft {
+export function writeTemplateReport(analysis: Analysis): ReportDraft {
   const first = firstName(analysis.athlete.name)
   const completed = analysis.tests.filter((test) => test.status === 'completed' && test.raw !== null)
   const skipped = analysis.tests.filter((test) => test.status === 'skipped')
@@ -37,7 +37,6 @@ export function writeTemplateReport(analysis: Analysis, coachName: string): Repo
     takeaways,
     recommendations,
     caveats: caveatsFor(analysis),
-    coach_brief: coachBrief(analysis, coachName),
   }
 }
 
@@ -237,27 +236,6 @@ function caveatsFor(analysis: Analysis): string[] {
         flag.kind === 'asymmetry',
     )
     .map((flag) => flag.text)
-}
-
-function coachBrief(analysis: Analysis, coachName: string): string {
-  const bits: string[] = []
-  const who = coachName.trim() ? `${coachName.trim()}: ` : ''
-  if (analysis.flags.some((flag) => flag.kind === 'skipped')) {
-    bits.push('Do not let a draft invent jump (or any) scores.')
-  }
-  if (analysis.flags.some((flag) => flag.kind === 'verify_outlier')) {
-    bits.push('Verify the outlier with the tester before the athlete internalizes it.')
-  }
-  if (analysis.flags.some((flag) => flag.kind === 'asymmetry')) {
-    bits.push('The L/R split is in the takeaways — keep it if you sign.')
-  }
-  if (analysis.flags.some((flag) => flag.kind === 'quality')) {
-    bits.push('A tester marked a quality issue. Prefer a retest to programming off it.')
-  }
-  if (bits.length === 0) {
-    bits.push('Clean sheet. Light edit, then sign. Recommendations are qualities, not a program.')
-  }
-  return who + bits.join(' ')
 }
 
 function joinAnd(items: string[]): string {

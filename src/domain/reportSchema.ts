@@ -1,7 +1,7 @@
 import { PROMPT_EXAMPLE } from './promptExample.ts'
 import type { ReportDraft, ReportSection } from './types.ts'
 
-export const PROMPT_VERSION = 'forge-report-v3'
+export const PROMPT_VERSION = 'forge-report-v4'
 export const REPORT_MODEL = 'grok-4.6'
 
 const SECTION = {
@@ -20,7 +20,7 @@ const SECTION = {
 export const REPORT_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['headline', 'overview', 'takeaways', 'recommendations', 'caveats', 'coach_brief'],
+  required: ['headline', 'overview', 'takeaways', 'recommendations', 'caveats'],
   properties: {
     headline: {
       type: 'string',
@@ -53,10 +53,6 @@ export const REPORT_JSON_SCHEMA = {
       description:
         'ONLY real problems: skipped tests, tester notes, verify-outlier flags, injury conditions. If none, return []. Never write “no tests were skipped” or “no handbook range” — the table already covers that.',
     },
-    coach_brief: {
-      type: 'string',
-      description: 'Private note for the coach. Not printed for the athlete.',
-    },
   },
 } as const
 
@@ -67,7 +63,6 @@ export function emptyDraft(): ReportDraft {
     takeaways: [],
     recommendations: [],
     caveats: [],
-    coach_brief: '',
   }
 }
 
@@ -88,13 +83,19 @@ export function isReportDraft(value: unknown): value is ReportDraft {
     Array.isArray(v.recommendations) &&
     v.recommendations.every(isSection) &&
     Array.isArray(v.caveats) &&
-    v.caveats.every((item) => typeof item === 'string') &&
-    typeof v.coach_brief === 'string'
+    v.caveats.every((item) => typeof item === 'string')
   )
 }
 
 export function normalizeDraft(value: unknown): ReportDraft | undefined {
-  return isReportDraft(value) ? value : undefined
+  if (!isReportDraft(value)) return undefined
+  return {
+    headline: value.headline,
+    overview: value.overview,
+    takeaways: value.takeaways,
+    recommendations: value.recommendations,
+    caveats: value.caveats,
+  }
 }
 
 export function cleanDraft(draft: ReportDraft): ReportDraft {

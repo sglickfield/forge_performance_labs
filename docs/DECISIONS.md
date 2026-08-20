@@ -36,7 +36,7 @@ Pipeline, on purpose:
 
 1. Deterministic analysis turns an export + the 2019 handbook into a **fact pack** (bands, flags, notes, cohort rank for mid-thigh pull).
 2. The model sees only the fact pack, plus a few-shot **prompt example** (`src/domain/promptExample.ts`). That example is not the eval gold.
-3. Output is constrained to a JSON schema (overview, takeaways, recommendations, caveats, coach brief).
+3. Output is constrained to a JSON schema (overview, takeaways, recommendations, caveats).
 4. A fact-checker rejects drafts that invent skipped-test numbers or drop required caveats. `cleanDraft()` strips empty-sheet caveats.
 5. If `XAI_API_KEY` is missing or the call fails, the same fact pack runs through `templateWriter.ts` so the desk still works in a live session.
 6. The coach must edit/sign. Nothing is sent to an athlete without that step.

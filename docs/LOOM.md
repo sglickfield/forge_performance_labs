@@ -15,8 +15,7 @@ Open one clean athlete (Maya or Aisha) *and* one messy one (Casey or Taylor). Ge
 
 - scores against the 2019 handbook, not a mystery score
 - the letter in the coach's voice
-- the coach brief on the side (human in the loop)
-- edit one sentence, type your name, sign
+- edit the section on the right, type your name, sign at the bottom
 - copy the athlete link — they see only their letter, no desk
 - flip to Print / PDF if you want a paper copy
 

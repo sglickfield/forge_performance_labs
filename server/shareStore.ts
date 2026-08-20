@@ -50,7 +50,6 @@ export function publishShare(input: PublicLetter): SharedLetter {
   const token = findExistingToken(input.athlete.athlete_id, input.athlete.tested_on) ?? newToken()
   const shared: SharedLetter = {
     ...input,
-    letter: { ...input.letter, coach_brief: '' },
     token,
   }
   writeFileSync(fileFor(token), `${JSON.stringify(shared, null, 2)}\n`)
@@ -64,7 +63,7 @@ export function readShare(token: string): SharedLetter {
   if (!raw?.athlete?.athlete_id || !raw.letter?.overview || !raw.signedBy) {
     throw new Error('Not found')
   }
-  return { ...raw, letter: { ...raw.letter, coach_brief: '' }, token }
+  return { ...raw, token }
 }
 
 export function unpublishShare(token: string): void {

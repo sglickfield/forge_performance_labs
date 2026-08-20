@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { COACH_VERDICTS, letterWasEdited, verdictHint } from '../domain/coachRating'
 import { confidenceLabel } from '../domain/confidence'
 import { factCheck } from '../domain/factCheck'
@@ -13,7 +13,6 @@ import type {
   ReportDraft,
 } from '../domain/types'
 import {
-  attentionCount,
   clearSession,
   rateAthlete,
   roster,
@@ -25,7 +24,7 @@ import {
   unlockAthlete,
   upsertExports,
 } from '../persist/store'
-import { ReportLetter } from './ReportLetter'
+import { ReportComposer } from './ReportLetter'
 
 const BAND_COPY: Record<string, string> = {
   above: 'above typical',
@@ -50,6 +49,7 @@ export function Desk({
   const [busy, setBusy] = useState(false)
   const [over, setOver] = useState(false)
   const [coachNote, setCoachNote] = useState('')
+  const [rosterOpen, setRosterOpen] = useState(false)
 
   const selected = athletes.find((row) => row.export.athlete.athlete_id === selectedId) ?? athletes[0]
 
@@ -198,36 +198,45 @@ export function Desk({
 
       <div className="workspace">
         {athletes.length > 0 ? (
-          <aside className="roster">
-            <h2>
-              This week · {athletes.length} · {athletes.filter((row) => row.status === 'signed').length} signed
-            </h2>
-            {athletes.map((row) => {
-              const id = row.export.athlete.athlete_id
-              const hot = attentionCount(row)
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className={selected?.export.athlete.athlete_id === id ? 'row active' : 'row'}
-                  onClick={() => setSelectedId(id)}
-                >
-                  <div className="row-name">
-                    <span>{row.export.athlete.name}</span>
-                    <span className={row.status === 'signed' ? 'pill ok' : hot ? 'pill hot' : 'pill'}>
-                      {row.status === 'signed' ? 'signed' : hot ? `${hot} flags` : row.status}
-                    </span>
-                  </div>
-                  <div className="row-meta">{row.export.athlete.sport}</div>
-                </button>
-              )
-            })}
-          </aside>
-        ) : (
-          <aside className="roster">
-            <h2>No combine loaded</h2>
-          </aside>
-        )}
+          <>
+            <button
+              type="button"
+              className={rosterOpen ? 'drawer-handle open' : 'drawer-handle'}
+              aria-expanded={rosterOpen}
+              onClick={() => setRosterOpen((open) => !open)}
+            >
+              Athletes · {athletes.length}
+            </button>
+            {rosterOpen ? (
+              <button type="button" className="drawer-backdrop" aria-label="Close athlete list" onClick={() => setRosterOpen(false)} />
+            ) : null}
+            <aside className={rosterOpen ? 'roster drawer open' : 'roster drawer'}>
+              <h2>
+                This week · {athletes.filter((row) => row.status === 'signed').length} signed
+              </h2>
+              {athletes.map((row) => {
+                const id = row.export.athlete.athlete_id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    className={selected?.export.athlete.athlete_id === id ? 'row active' : 'row'}
+                    onClick={() => {
+                      setSelectedId(id)
+                      setRosterOpen(false)
+                    }}
+                  >
+                    <div className="row-name">
+                      <span>{row.export.athlete.name}</span>
+                      <span className={row.status === 'signed' ? 'pill ok' : 'pill'}>{row.status}</span>
+                    </div>
+                    <div className="row-meta">{row.export.athlete.sport}</div>
+                  </button>
+                )
+              })}
+            </aside>
+          </>
+        ) : null}
 
         <main className="stage">
           {error ? <p className="warn" style={{ padding: '16px 28px 0' }}>{error}</p> : null}
@@ -303,6 +312,15 @@ export function Desk({
         }}
       />
     </div>
+  )
+}
+
+function field(label: string, control: ReactNode) {
+  return (
+    <>
+      <div className="edit-label">{label}</div>
+      {control}
+    </>
   )
 }
 
@@ -406,163 +424,147 @@ function AthletePane({
         ))}
       </div>
 
-      <div className="split">
-        <div className="letter-wrap">
-          <ReportLetter
-            athlete={athlete}
-            administration={selected.export.administration}
-            tests={selected.analysis.tests}
-            ageBandLabel={selected.analysis.ageBandLabel}
-            letter={letter}
-            signedBy={selected.signedBy || session.coachName}
-            signedAt={selected.signedAt}
+      <ReportComposer
+        view={{
+          athlete,
+          administration: selected.export.administration,
+          tests: selected.analysis.tests,
+          ageBandLabel: selected.analysis.ageBandLabel,
+          letter,
+          signedBy: selected.signedBy || session.coachName,
+          signedAt: selected.signedAt,
+        }}
+        edits={
+          locked
+            ? undefined
+            : {
+                headline: field(
+                  'Headline',
+                  <input
+                    type="text"
+                    value={letter.headline}
+                    placeholder="Headline"
+                    onChange={(event) => patch('headline', event.target.value)}
+                  />,
+                ),
+                overview: field(
+                  'Overview',
+                  <textarea
+                    value={letter.overview}
+                    placeholder="Overview"
+                    onChange={(event) => patch('overview', event.target.value)}
+                  />,
+                ),
+                takeaways: field(
+                  'Takeaways',
+                  <textarea
+                    value={letter.takeaways.map((section) => `${section.heading}\n${section.body}`).join('\n\n')}
+                    placeholder={'Heading\nParagraph'}
+                    onChange={(event) => patch('takeaways', parseSections(event.target.value))}
+                  />,
+                ),
+                recommendations: field(
+                  'Recommendations',
+                  <textarea
+                    value={letter.recommendations
+                      .map((section) => `${section.heading}\n${section.body}`)
+                      .join('\n\n')}
+                    placeholder={'Heading\nParagraph'}
+                    onChange={(event) => patch('recommendations', parseSections(event.target.value))}
+                  />,
+                ),
+                caveats: field(
+                  'Caveats',
+                  <textarea
+                    value={letter.caveats.join('\n')}
+                    placeholder="One caveat per line"
+                    onChange={(event) => patch('caveats', event.target.value.split('\n'))}
+                  />,
+                ),
+              }
+        }
+      />
+
+      <div className="hitl">
+        <div className="hitl-main">
+          <h3>Human in the loop</h3>
+          <textarea
+            rows={2}
+            placeholder="Direction for a redraft — e.g. go easier on the sprint, mention the ankle in your own words."
+            value={coachNote}
+            disabled={locked}
+            onChange={(event) => onCoachNote(event.target.value)}
           />
-          {!locked ? (
-            <div className="edit-block">
-              <label htmlFor="headline">Edit the report before you sign</label>
-              <input
-                id="headline"
-                type="text"
-                value={letter.headline}
-                onChange={(event) => patch('headline', event.target.value)}
-              />
-              <textarea
-                rows={5}
-                value={letter.overview}
-                onChange={(event) => patch('overview', event.target.value)}
-              />
-              <textarea
-                rows={6}
-                value={letter.takeaways.map((section) => `${section.heading}\n${section.body}`).join('\n\n')}
-                onChange={(event) => patch('takeaways', parseSections(event.target.value))}
-              />
-              <textarea
-                rows={8}
-                value={letter.recommendations
-                  .map((section) => `${section.heading}\n${section.body}`)
-                  .join('\n\n')}
-                onChange={(event) => patch('recommendations', parseSections(event.target.value))}
-              />
-              <textarea
-                rows={3}
-                value={letter.caveats.join('\n')}
-                onChange={(event) => patch('caveats', event.target.value.split('\n'))}
-              />
+          {selected.letter ? (
+            <div className="rating-block">
+              <p className="meta">How close was this draft to something you would hand over?</p>
+              <div className="choices" role="group" aria-label="Draft rating">
+                {COACH_VERDICTS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={selected.coachRating?.verdict === item.id ? 'choice on' : 'choice'}
+                    onClick={() => onRate(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              {selected.coachRating ? (
+                <p className="meta">{verdictHint(selected.coachRating.verdict)}</p>
+              ) : (
+                <p className="meta">Optional — rate before or after you sign.</p>
+              )}
+              {letterWasEdited(selected.draft, selected.letter) ? (
+                <p className="meta">The letter text differs from the model draft.</p>
+              ) : null}
+            </div>
+          ) : null}
+          {issues.length > 0 ? (
+            <div className="flags">
+              {issues.map((issue) => (
+                <div key={issue.code} className="flag verify_outlier">
+                  {issue.message}
+                </div>
+              ))}
             </div>
           ) : null}
         </div>
-
-        <aside className="rail">
+        <div className="hitl-side">
           {selected.generateMeta?.confidence ? (
-            <div className={`card confidence ${selected.generateMeta.confidence.band}`}>
-              <h3>Confidence vs gold letter</h3>
-              <p className="confidence-band">{confidenceLabel(selected.generateMeta.confidence.band)}</p>
-              <p className="meta">
-                Cosine {selected.generateMeta.confidence.score.toFixed(3)} against this athlete’s
-                golden dataset PDF. High ≥ 0.80 · medium 0.70–0.79 · low &lt; 0.70.
-              </p>
-            </div>
-          ) : selected.letter ? (
-            <div className="card">
-              <h3>Confidence vs gold letter</h3>
-              <p className="meta">No golden PDF for this athlete — score shows after a draft when a match exists in golden_datasets/.</p>
-            </div>
+            <p className={`confidence-inline ${selected.generateMeta.confidence.band}`}>
+              {confidenceLabel(selected.generateMeta.confidence.band)} ·{' '}
+              {selected.generateMeta.confidence.score.toFixed(3)}
+            </p>
           ) : null}
-          <div className="card">
-            <h3>Flags for you, not the athlete</h3>
-            <div className="flags">
-              {selected.analysis.flags.length === 0 ? (
-                <p className="meta">Clean sheet. Light edit, then sign.</p>
-              ) : (
-                selected.analysis.flags.map((flag) => (
-                  <div key={flag.text} className={`flag ${flag.kind}`}>
-                    {flag.text}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="card">
-            <h3>Coach brief</h3>
-            <p>{letter.coach_brief || 'Draft a letter to get the internal note.'}</p>
-            {selected.generateMeta ? (
-              <p className="meta" style={{ marginTop: 12 }}>
-                {selected.generateMeta.source === 'grok' ? 'Grok draft' : 'Deterministic draft'} ·{' '}
-                {selected.generateMeta.model} · {selected.generateMeta.promptVersion}
-                {selected.generateMeta.warning ? <span className="warn"> · {selected.generateMeta.warning}</span> : null}
-              </p>
+          {selected.generateMeta ? (
+            <p className="meta">
+              {selected.generateMeta.source === 'grok' ? 'Grok' : 'Template'} · {selected.generateMeta.promptVersion}
+              {selected.generateMeta.warning ? <span className="warn"> · {selected.generateMeta.warning}</span> : null}
+            </p>
+          ) : grokReady ? (
+            <p className="meta">Live drafts use grok-4.6, then a fact-check.</p>
+          ) : (
+            <p className="meta">No API key — still drafts from the same facts.</p>
+          )}
+          <div className="row-actions">
+            {locked ? (
+              <button type="button" className="ghost" onClick={onUnlock}>
+                Unlock
+              </button>
             ) : (
-              <p className="meta" style={{ marginTop: 12 }}>
-                {grokReady
-                  ? 'Live drafts use grok-4.6 on a fact pack, then a fact-check.'
-                  : 'No API key — still drafts, from the same facts.'}
-              </p>
+              <button
+                type="button"
+                className="solid"
+                disabled={!session.coachName.trim() || !selected.letter}
+                onClick={onSign}
+              >
+                Sign and lock
+              </button>
             )}
           </div>
-
-          <div className="card stack">
-            <h3>Human in the loop</h3>
-            <textarea
-              rows={3}
-              placeholder="Direction for a redraft — e.g. go easier on the sprint, mention the ankle in your own words."
-              value={coachNote}
-              disabled={locked}
-              onChange={(event) => onCoachNote(event.target.value)}
-            />
-            {selected.letter ? (
-              <div className="rating-block">
-                <p className="meta">How close was this draft to something you would hand over?</p>
-                <div className="choices" role="group" aria-label="Draft rating">
-                  {COACH_VERDICTS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={selected.coachRating?.verdict === item.id ? 'choice on' : 'choice'}
-                      onClick={() => onRate(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-                {selected.coachRating ? (
-                  <p className="meta">{verdictHint(selected.coachRating.verdict)}</p>
-                ) : (
-                  <p className="meta">Optional — rate before or after you sign.</p>
-                )}
-                {letterWasEdited(selected.draft, selected.letter) ? (
-                  <p className="meta">The letter text differs from the model draft.</p>
-                ) : null}
-              </div>
-            ) : null}
-            <div className="row-actions" style={{ marginTop: 10 }}>
-              {locked ? (
-                <button type="button" className="ghost" onClick={onUnlock}>
-                  Unlock
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="solid"
-                  disabled={!session.coachName.trim() || !selected.letter}
-                  onClick={onSign}
-                >
-                  Sign and lock
-                </button>
-              )}
-            </div>
-            {!session.coachName.trim() ? <p className="meta">Type your name in the top bar to sign.</p> : null}
-            {issues.length > 0 ? (
-              <div className="flags" style={{ marginTop: 12 }}>
-                {issues.map((issue) => (
-                  <div key={issue.code} className="flag verify_outlier">
-                    {issue.message}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </aside>
+          {!session.coachName.trim() ? <p className="meta">Type your name in the top bar to sign.</p> : null}
+        </div>
       </div>
     </section>
   )

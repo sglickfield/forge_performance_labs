@@ -144,14 +144,61 @@ a.ghost {
 
 .workspace {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 1fr;
   min-height: 0;
+}
+
+.drawer-handle {
+  position: fixed;
+  left: 0;
+  top: 96px;
+  z-index: 20;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  border-radius: 0 0 8px 8px;
+  padding: 12px 8px;
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-left: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.drawer-handle.open { background: var(--paper-2); }
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  border: 0;
+  border-radius: 0;
+  background: rgba(28, 23, 18, 0.18);
+  padding: 0;
 }
 
 .roster {
   border-right: 1px solid var(--rule);
   overflow: auto;
   padding: 12px 0 32px;
+}
+
+.roster.drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(280px, 90vw);
+  z-index: 16;
+  background: var(--paper);
+  padding-top: 72px;
+  transform: translateX(-105%);
+  transition: transform 0.2s ease;
+}
+
+.roster.drawer.open {
+  transform: translateX(0);
+  box-shadow: var(--shadow);
 }
 
 .roster h2 {
@@ -249,9 +296,10 @@ a.ghost {
 .drop.over { background: var(--white); border-color: var(--ink); }
 
 .athlete {
-  padding: 24px 28px 80px;
+  padding: 24px 28px 0;
   display: grid;
   gap: 20px;
+  padding-left: 48px;
 }
 
 .identity {
@@ -302,17 +350,67 @@ a.ghost {
 .score.skipped { opacity: 0.65; }
 .score.unbenchmarked { box-shadow: inset 0 -2px 0 var(--brass-soft); }
 
-.split {
+.composer {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.8fr);
-  gap: 24px;
-  align-items: start;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-rows: auto auto auto auto auto auto;
+  column-gap: 20px;
+  align-items: stretch;
+}
+
+.composer .letter-wrap {
+  grid-column: 1;
+  grid-row: 1 / span 6;
+  display: grid;
+  grid-template-rows: subgrid;
+  min-width: 0;
+}
+
+.composer .edit-rail {
+  grid-column: 2;
+  grid-row: 1 / span 6;
+  display: grid;
+  grid-template-rows: subgrid;
+  min-width: 0;
+}
+
+.composer .letter {
+  padding: 28px 28px 32px;
+}
+
+.composer .letter .body {
+  max-width: none;
 }
 
 .letter-wrap {
   background: var(--white);
   border: 1px solid var(--rule);
   box-shadow: var(--shadow);
+  min-width: 0;
+}
+
+.letter-band {
+  min-height: 0;
+}
+
+.letter-band + .letter-band {
+  border-top: 1px solid var(--rule);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.edit-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 0 16px;
+}
+
+.edit-slot textarea {
+  flex: 1 1 auto;
+  min-height: 180px;
+  width: 100%;
 }
 
 .athlete-page {
@@ -355,39 +453,40 @@ a.ghost {
 
 .athlete-foot a { color: inherit; }
 
-.rail {
+.hitl {
+  position: sticky;
+  bottom: 0;
+  z-index: 8;
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(200px, 0.55fr);
+  gap: 20px;
+  align-items: start;
+  padding: 14px 16px 16px;
+  margin: 8px -28px 0 -48px;
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
 }
 
-.card {
-  background: var(--white);
-  border: 1px solid var(--rule);
-  padding: 16px 16px 18px;
-}
-
-.card h3 {
+.hitl h3 {
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-weight: 500;
 }
 
-.confidence-band {
+.hitl-main, .hitl-side { display: grid; gap: 8px; }
+
+.confidence-inline {
   font-family: var(--serif);
-  font-size: 28px;
+  font-size: 22px;
   letter-spacing: -0.03em;
-  margin: 4px 0 8px;
 }
 
-.confidence.high { box-shadow: inset 3px 0 0 var(--moss); }
-.confidence.high .confidence-band { color: var(--moss); }
-.confidence.medium { box-shadow: inset 3px 0 0 var(--brass); }
-.confidence.medium .confidence-band { color: var(--brass); }
-.confidence.low { box-shadow: inset 3px 0 0 var(--clay); }
-.confidence.low .confidence-band { color: var(--clay); }
+.confidence-inline.high { color: var(--moss); }
+.confidence-inline.medium { color: var(--brass); }
+.confidence-inline.low { color: var(--clay); }
 
 .flags { display: grid; gap: 8px; }
 
@@ -400,7 +499,7 @@ a.ghost {
 .flag.skipped, .flag.verify_outlier, .flag.quality { border-color: var(--clay); }
 .flag.asymmetry { border-color: var(--brass); }
 
-textarea, .stack input[type='text'] {
+textarea, .stack input[type='text'], .edit-rail input, .edit-rail textarea {
   width: 100%;
   border: 1px solid var(--rule);
   background: var(--paper-2);
@@ -408,7 +507,7 @@ textarea, .stack input[type='text'] {
   resize: vertical;
 }
 
-textarea:focus, .stack input[type='text']:focus {
+textarea:focus, .stack input[type='text']:focus, .edit-rail input:focus, .edit-rail textarea:focus {
   outline: 1px solid var(--ink);
 }
 
@@ -489,6 +588,20 @@ textarea:focus, .stack input[type='text']:focus {
   font-size: 13px;
   color: var(--ink-soft);
   margin: 0;
+}
+
+.headline-line {
+  font-size: 18px;
+  font-style: italic;
+  margin: 10px 0 0;
+}
+
+.edit-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
 }
 
 .letter h2 {
@@ -587,26 +700,33 @@ textarea:focus, .stack input[type='text']:focus {
   color: var(--ink-soft);
 }
 
-.edit-block { display: grid; gap: 8px; padding: 16px 44px 24px; }
-
-.edit-block label {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
 @media (max-width: 1100px) {
   .scores { grid-template-columns: repeat(3, 1fr); }
-  .split, .workspace { grid-template-columns: 1fr; }
-  .roster { border-right: 0; border-bottom: 1px solid var(--rule); max-height: 240px; }
+  .hitl { grid-template-columns: 1fr; }
+  .composer {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+  .composer .letter-wrap,
+  .composer .edit-rail {
+    grid-column: auto;
+    grid-row: auto;
+    display: grid;
+    grid-template-rows: none;
+  }
 }
 
 @media print {
   body { background: white; }
-  .topbar, .roster, .rail, .edit-block, .identity .row-actions, .athlete-foot { display: none !important; }
-  .workspace, .split { display: block; }
-  .letter-wrap { border: 0; box-shadow: none; }
+  .topbar, .roster, .drawer-handle, .drawer-backdrop, .hitl, .edit-rail, .identity .row-actions, .athlete-foot { display: none !important; }
+  .workspace, .composer { display: block; }
+  .composer .letter-wrap {
+    display: block;
+    grid-row: auto;
+    border: 0;
+    box-shadow: none;
+  }
+  .letter-band + .letter-band { border-top: 0; margin-top: 0; padding-top: 0; }
   .athlete, .athlete-page { padding: 0; }
   .scores { display: none; }
 }

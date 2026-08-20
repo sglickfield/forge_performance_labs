@@ -56,7 +56,7 @@ describe('analyzeAthlete', () => {
 describe('template + fact-check', () => {
   it('writes Aisha as a clustered report, not nine isolated scores', () => {
     const analysis = analyzeAthlete(load('FPL-2429'))
-    const draft = writeTemplateReport(analysis, 'Alex F')
+    const draft = writeTemplateReport(analysis)
     expect(factCheck(analysis, draft)).toEqual([])
     expect(draft.overview.toLowerCase()).toMatch(/handbook|typical range/)
     const takeawayText = draft.takeaways.map((section) => `${section.heading} ${section.body}`).join(' ')
@@ -68,7 +68,7 @@ describe('template + fact-check', () => {
 
   it('refuses to invent Casey jump scores and requires caveats', () => {
     const analysis = analyzeAthlete(load('FPL-2145'))
-    const draft = writeTemplateReport(analysis, 'Alex F')
+    const draft = writeTemplateReport(analysis)
     const issues = factCheck(analysis, draft)
     expect(issues).toEqual([])
     const letter = `${draft.overview} ${draft.caveats.join(' ')} ${draft.takeaways.map((s) => s.body).join(' ')}`.toLowerCase()
@@ -78,7 +78,7 @@ describe('template + fact-check', () => {
 
   it('catches a draft that invents Casey’s vertical', () => {
     const analysis = analyzeAthlete(load('FPL-2145'))
-    const draft = writeTemplateReport(analysis, 'Alex F')
+    const draft = writeTemplateReport(analysis)
     draft.overview += ' Vertical jump 44 cm was excellent.'
     const issues = factCheck(analysis, draft)
     expect(issues.some((issue) => issue.code === 'invented_skip_score')).toBe(true)
