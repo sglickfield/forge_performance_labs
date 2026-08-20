@@ -43,7 +43,7 @@ export async function generateReport(
   if (!apiKey) {
     return withConfidence(
       req.analysis.athlete.name,
-      fromTemplate(req.analysis, req.coachName, 'No XAI_API_KEY — used the deterministic writer.'),
+      fromTemplate(req.analysis, 'No XAI_API_KEY — used the deterministic writer.'),
     )
   }
 
@@ -51,7 +51,7 @@ export async function generateReport(
     const draft = cleanDraft(await callGrok(facts, req.coachName, req.coachNote ?? '', apiKey))
     const issues = factCheck(req.analysis, draft)
     if (issues.some((issue) => issue.code === 'invented_skip_score')) {
-      const fallback = writeTemplateReport(req.analysis, req.coachName)
+      const fallback = writeTemplateReport(req.analysis)
       return withConfidence(req.analysis.athlete.name, {
         draft: fallback,
         meta: {
@@ -78,7 +78,7 @@ export async function generateReport(
     const message = error instanceof Error ? error.message : 'Grok request failed'
     return withConfidence(
       req.analysis.athlete.name,
-      fromTemplate(req.analysis, req.coachName, `Grok unavailable (${message}). Used the deterministic writer.`),
+      fromTemplate(req.analysis, `Grok unavailable (${message}). Used the deterministic writer.`),
     )
   }
 }
@@ -93,8 +93,8 @@ async function withConfidence(athleteName: string, result: GenerateResponse): Pr
   }
 }
 
-function fromTemplate(analysis: Analysis, coachName: string, warning: string): GenerateResponse {
-  const draft = cleanDraft(writeTemplateReport(analysis, coachName))
+function fromTemplate(analysis: Analysis, warning: string): GenerateResponse {
+  const draft = cleanDraft(writeTemplateReport(analysis))
   return {
     draft,
     meta: {

@@ -99,7 +99,6 @@ export interface ReportDraft {
   takeaways: ReportSection[]
   recommendations: ReportSection[]
   caveats: string[]
-  coach_brief: string
 }
 
 export type DraftSource = 'grok' | 'template'

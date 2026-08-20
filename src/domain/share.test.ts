@@ -34,8 +34,7 @@ function signedRecord(): AthleteRecord {
     ],
   })
   const analysis = analyzeAthlete(exp)
-  const draft = writeTemplateReport(analysis, 'Alex F')
-  draft.coach_brief = 'Do not show this to the athlete.'
+  const draft = writeTemplateReport(analysis)
   return {
     sourceName: 'test.json',
     export: exp,
@@ -56,11 +55,11 @@ describe('share URL', () => {
     expect(athleteSharePath('abcdefghijklmnopqr')).toBe('/a/abcdefghijklmnopqr')
   })
 
-  it('strips the coach brief from a signed letter', () => {
+  it('shares the signed letter without desk metadata', () => {
     const pub = publicLetterFrom(signedRecord())
-    expect(pub.letter.coach_brief).toBe('')
     expect(pub.signedBy).toBe('Alex F')
     expect(pub.tests.length).toBeGreaterThan(0)
+    expect(pub.letter.overview.length).toBeGreaterThan(0)
   })
 
   it('refuses to share an unsigned draft', () => {
@@ -79,14 +78,13 @@ describe('share store', () => {
     if (dir) rmSync(dir, { recursive: true, force: true })
   })
 
-  it('publishes, reuses the token, and hides the coach brief on disk', () => {
+  it('publishes, reuses the token, and round-trips the letter', () => {
     dir = mkdtempSync(join(tmpdir(), 'forge-share-'))
     setShareRoot(dir)
     const first = publishShare(publicLetterFrom(signedRecord()))
     const second = publishShare(publicLetterFrom(signedRecord()))
     expect(second.token).toBe(first.token)
     const loaded = readShare(first.token)
-    expect(loaded.letter.coach_brief).toBe('')
     expect(loaded.athlete.athlete_id).toBe('FPL-0001')
     unpublishShare(first.token)
     expect(() => readShare(first.token)).toThrow(/Not found/)

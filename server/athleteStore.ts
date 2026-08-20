@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseAthleteExport } from '../src/domain/parseAthlete.ts'
@@ -77,6 +77,7 @@ export function listSummaries(): AthleteSummary[] {
   const out: AthleteSummary[] = []
   for (const id of readdirSync(ATHLETES_DIR)) {
     const dir = join(ATHLETES_DIR, id)
+    if (!statSync(dir).isDirectory()) continue
     const files = filesIn(dir)
     if (files.length === 0) continue
     const latest = files[files.length - 1]!

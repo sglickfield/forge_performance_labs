@@ -35,7 +35,7 @@ describe('semantic drift (local MiniLM embeddings)', () => {
     for (const item of listLatestExports()) {
       const exp = item.export
       const id = exp.athlete.name
-      const draft = writeTemplateReport(analyzeAthlete(exp), 'Alex F')
+      const draft = writeTemplateReport(analyzeAthlete(exp))
       const current = flattenDraft(draft)
       const gold = goldProse(loadGoldLetter(id))
       const [a, b] = await Promise.all([embed(current), embed(gold)])

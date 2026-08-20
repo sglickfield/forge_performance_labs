@@ -46,9 +46,8 @@ Notes are first-class facts. They become caveats the coach should keep or delete
 - Shape matches what a coach actually hands over: overview, results table, clustered takeaways, coaching recommendations.
 - Recommendations name training *qualities* (sprint work, plyometrics, hip hinge, mobility, retest window). They do not invent sets, reps, diagnoses, or skipped scores.
 - Handbook ranges are recreational-to-competitive, not elite. The overview says so once.
-- An internal **coach brief** sits beside the report. It is not printed for the athlete.
 - After a draft exists, the coach may rate it: **Ready** (would send), **Edited** (rewrote parts), **Rewrite** (would not send). That rating is of the *draft*, not the athlete. It is optional, stays on the desk, and is cleared if they unlock or generate a new draft.
-- A signed letter can be shared as a no-login link (`/a/<token>`). The athlete sees only that letter — not the roster, flags, coach brief, or rating. The token is the access control. Unlocking unpublishes the link.
+- A signed letter can be shared as a no-login link (`/a/<token>`). The athlete sees only that letter — not the roster, flags, or rating. The token is the access control. Unlocking unpublishes the link.
 
 ## Session
 
