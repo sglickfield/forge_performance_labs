@@ -379,15 +379,6 @@ textarea:focus, .stack input[type='text']:focus {
   margin-bottom: 28px;
 }
 
-.letter-head .lab { font-size: 20px; letter-spacing: -0.02em; }
-.letter-head .tiny {
-  font-family: var(--sans);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
 .letter h1 {
   font-family: var(--serif);
   font-size: 30px;
@@ -471,23 +462,11 @@ textarea:focus, .stack input[type='text']:focus {
 
 .disclaimer { margin-top: 28px; font-style: normal; line-height: 1.45; }
 
-.letter .to { font-style: italic; margin-bottom: 12px; }
-
 .letter .body {
   font-size: 16px;
   line-height: 1.5;
   max-width: 46em;
   margin: 0 0 12px;
-}
-
-.letter h3 {
-  font-family: var(--sans);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  margin: 28px 0 8px;
-  color: var(--ink-soft);
-  font-weight: 500;
 }
 
 .letter ul {
@@ -502,8 +481,6 @@ textarea:focus, .stack input[type='text']:focus {
   padding-left: 14px;
   border-left: 1px solid var(--rule-strong);
 }
-
-.letter .close { margin-top: 28px; font-style: italic; }
 
 .signature {
   margin-top: 36px;

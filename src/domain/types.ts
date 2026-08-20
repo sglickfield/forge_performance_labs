@@ -79,8 +79,6 @@ export interface Analysis {
   ageBandLabel: string
   tests: TestView[]
   flags: Flag[]
-  keep: TestView[]
-  focus: TestView[]
   midthigh?: {
     raw: number
     rank: number

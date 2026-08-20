@@ -94,22 +94,7 @@ export function isReportDraft(value: unknown): value is ReportDraft {
 }
 
 export function normalizeDraft(value: unknown): ReportDraft | undefined {
-  if (isReportDraft(value)) return value
-  if (typeof value !== 'object' || value === null) return undefined
-  const v = value as Record<string, unknown>
-  if (typeof v.what_we_saw === 'string') {
-    const keep = Array.isArray(v.keep_doing) ? v.keep_doing.filter((item) => typeof item === 'string') : []
-    const focus = Array.isArray(v.focus_next) ? v.focus_next.filter((item) => typeof item === 'string') : []
-    return {
-      headline: typeof v.headline === 'string' ? v.headline : '',
-      overview: v.what_we_saw,
-      takeaways: keep.filter((item) => item.trim()).map((body) => ({ heading: 'Keep this', body })),
-      recommendations: focus.filter((item) => item.trim()).map((body) => ({ heading: 'Focus next', body })),
-      caveats: Array.isArray(v.caveats) ? v.caveats.filter((item) => typeof item === 'string') : [],
-      coach_brief: typeof v.coach_brief === 'string' ? v.coach_brief : '',
-    }
-  }
-  return undefined
+  return isReportDraft(value) ? value : undefined
 }
 
 export function cleanDraft(draft: ReportDraft): ReportDraft {

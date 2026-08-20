@@ -175,16 +175,6 @@ export function analyzeAthlete(exp: AthleteExport, sessionPulls: number[] = []):
     midthigh = { raw: pull.raw, rank: desc.indexOf(pull.raw) + 1, of: desc.length }
   }
 
-  const scored = tests.filter((test) => test.band === 'above' || test.band === 'below' || test.band === 'typical')
-  const keep = [...scored]
-    .filter((test) => test.band === 'above' || test.band === 'typical')
-    .sort((a, b) => rankKeep(b) - rankKeep(a))
-    .slice(0, 3)
-  const focus = [...tests]
-    .filter((test) => test.band === 'below' || test.status === 'skipped' || flags.some((flag) => flag.subtest === test.subtest && (flag.kind === 'asymmetry' || flag.kind === 'quality')))
-    .sort((a, b) => rankFocus(b) - rankFocus(a))
-    .slice(0, 3)
-
   return {
     athlete,
     administration,
@@ -192,33 +182,8 @@ export function analyzeAthlete(exp: AthleteExport, sessionPulls: number[] = []):
     ageBandLabel: ageBandLabel(ageBand),
     tests,
     flags,
-    keep: uniqueTests(keep),
-    focus: uniqueTests(focus),
     midthigh,
   }
-}
-
-function rankKeep(test: TestView): number {
-  if (test.band === 'above') return 2
-  if (test.band === 'typical') return 1
-  return 0
-}
-
-function rankFocus(test: TestView): number {
-  if (test.status === 'skipped') return 3
-  if (test.band === 'below') return 2
-  return 1
-}
-
-function uniqueTests(tests: TestView[]): TestView[] {
-  const seen = new Set<string>()
-  const out: TestView[] = []
-  for (const test of tests) {
-    if (seen.has(test.subtest)) continue
-    seen.add(test.subtest)
-    out.push(test)
-  }
-  return out
 }
 
 export function sessionPullsFrom(exports: AthleteExport[]): number[] {
