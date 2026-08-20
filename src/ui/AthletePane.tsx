@@ -47,6 +47,7 @@ export function AthletePane({
   onSign,
   onRate,
   onUnlock,
+  onCoachName,
   onSelectCombine,
   onClear,
 }: {
@@ -61,6 +62,7 @@ export function AthletePane({
   onSign: () => void
   onRate: (verdict: CoachVerdict) => void
   onUnlock: () => void
+  onCoachName: (name: string) => void
   onSelectCombine: (filename: string) => void
   onClear: () => void
 }) {
@@ -77,6 +79,7 @@ export function AthletePane({
 
   return (
     <section className="athlete">
+      <div className="athlete-scroll">
       <div className="identity">
         <div>
           <h1>{athlete.name}</h1>
@@ -220,12 +223,13 @@ export function AthletePane({
               }
         }
       />
+      </div>
 
-      <div className="hitl">
+      <footer className="hitl">
         <div className="hitl-main">
           <h3>Human in the loop</h3>
           <textarea
-            rows={2}
+            rows={1}
             placeholder="Direction for a redraft — e.g. go easier on the sprint, mention the ankle in your own words."
             value={coachNote}
             disabled={locked}
@@ -246,15 +250,17 @@ export function AthletePane({
                   </button>
                 ))}
               </div>
-              {selected.coachRating ? (
-                <p className="meta">{verdictHint(selected.coachRating.verdict)}</p>
-              ) : (
-                <p className="meta">Optional — rate before or after you sign.</p>
-              )}
-              {letterWasEdited(selected.draft, selected.letter) ? (
-                <p className="meta">The letter text differs from the model draft.</p>
-              ) : null}
             </div>
+          ) : null}
+          {selected.letter ? (
+            selected.coachRating ? (
+              <p className="meta">{verdictHint(selected.coachRating.verdict)}</p>
+            ) : (
+              <p className="meta">Optional — rate before or after you sign.</p>
+            )
+          ) : null}
+          {letterWasEdited(selected.draft, selected.letter) ? (
+            <p className="meta">The letter text differs from the model draft.</p>
           ) : null}
           {issues.length > 0 ? (
             <div className="flags">
@@ -268,10 +274,24 @@ export function AthletePane({
         </div>
         <div className="hitl-side">
           {selected.generateMeta?.confidence ? (
-            <p className={`confidence-inline ${selected.generateMeta.confidence.band}`}>
-              {confidenceLabel(selected.generateMeta.confidence.band)} ·{' '}
-              {selected.generateMeta.confidence.score.toFixed(3)}
-            </p>
+            <div className="confidence-block">
+              <div className="confidence-head">
+                <h3>Confidence</h3>
+                <span className="tip">
+                  <button type="button" className="info-i" aria-label="What confidence means" aria-describedby="confidence-tip">
+                    i
+                  </button>
+                  <span id="confidence-tip" className="tip-bubble" role="tooltip">
+                    How close this draft is to the athlete’s approved gold letter. High is 0.80 and up,
+                    medium 0.70–0.79, low below that. A drift check — not a grade of the coaching.
+                  </span>
+                </span>
+              </div>
+              <p className={`confidence-inline ${selected.generateMeta.confidence.band}`}>
+                {confidenceLabel(selected.generateMeta.confidence.band)} ·{' '}
+                {selected.generateMeta.confidence.score.toFixed(3)}
+              </p>
+            </div>
           ) : null}
           {selected.generateMeta ? (
             <p className="meta">
@@ -283,7 +303,16 @@ export function AthletePane({
           ) : (
             <p className="meta">No API key — still drafts from the same facts.</p>
           )}
-          <div className="row-actions">
+          <div className="hitl-sign">
+            <label className="signing">
+              Signing as
+              <input
+                value={session.coachName}
+                placeholder="Your name"
+                disabled={locked}
+                onChange={(event) => onCoachName(event.target.value)}
+              />
+            </label>
             {locked ? (
               <button type="button" className="ghost" onClick={onUnlock}>
                 Unlock
@@ -299,9 +328,8 @@ export function AthletePane({
               </button>
             )}
           </div>
-          {!session.coachName.trim() ? <p className="meta">Type your name in the top bar to sign.</p> : null}
         </div>
-      </div>
+      </footer>
     </section>
   )
 }
