@@ -4,8 +4,8 @@ Exercise science is out of scope. These are the working rules so a coach (or a r
 
 ## Handbook
 
-- `benchmarks.csv` is the only reference data that exists. Typical range = recreational-to-competitive adults, 2019 coach handbook.
-- Age bands: 18–29, 30–39, 40+. Athletes under 18 would use 18–29 and get a youth flag. Nobody in this batch is under 18.
+- `data/forge_coach_handbook_2019_v1.json` is the only reference data that exists. Typical range = recreational-to-competitive adults, 2019 coach handbook.
+- Age windows come from that file (`age_min` / `age_max`; `age_max` null = open-ended). Athletes under the youngest window use that window. Nobody in this batch is under 18.
 - Sex in the export is `M` / `F`. That is how the handbook is keyed. We do not invent other groupings.
 
 ## Directionality

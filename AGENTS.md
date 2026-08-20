@@ -45,7 +45,7 @@ Each run writes a **new** `output/grok-eval-<timestamp>.md` (and `.json`). Fail 
 | Thing | Path |
 |---|---|
 | Combine JSON (app, tests, eval — read-only in tests) | `data/athletes/<athlete_id>/<tested_on>.json` |
-| 2019 handbook CSV (docs) | `data/benchmarks.csv` (runtime: `src/domain/benchmarks.ts`) |
+| 2019 handbook ranges | `data/forge_coach_handbook_2019_v1.json` (loaded by `src/domain/handbook.ts`) |
 | Export parse + analysis | `src/domain/` |
 | Report schema + fact-check | `src/domain/reportSchema.ts`, `src/domain/factCheck.ts` |
 | Deterministic writer | `src/domain/templateWriter.ts` |

@@ -1,4 +1,4 @@
-import { SUBTEST_ORDER } from './benchmarks.ts'
+import { SUBTEST_ORDER } from './subtests.ts'
 import type { AthleteExport, RawResult, ResultStatus, Sex, SubtestId } from './types.ts'
 
 const SUBTESTS = new Set<string>(SUBTEST_ORDER)

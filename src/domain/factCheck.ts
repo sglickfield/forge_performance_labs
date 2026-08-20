@@ -1,4 +1,4 @@
-import { TEST_META } from './benchmarks.ts'
+import { TEST_META } from './subtests.ts'
 import type { Analysis, ReportDraft, SubtestId } from './types.ts'
 
 export interface FactCheckIssue {
