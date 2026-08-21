@@ -13,6 +13,7 @@ import {
   activeRecord,
   applyFileLists,
   clearSession,
+  filenameOf,
   rateAthlete,
   roster,
   applyConfidenceResults,
@@ -40,9 +41,9 @@ export function Desk({
   const athletes = useMemo(() => roster(session), [session])
   const [selectedId, setSelectedId] = useState<string | null>(athletes[0]?.export.athlete.athlete_id ?? null)
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [writing, setWriting] = useState<Record<string, true>>({})
   const [over, setOver] = useState(false)
-  const [coachNote, setCoachNote] = useState('')
+  const [coachNotes, setCoachNotes] = useState<Record<string, string>>({})
   const [rosterOpen, setRosterOpen] = useState(false)
   const [conflict, setConflict] = useState<{
     export: AthleteExport
@@ -55,12 +56,16 @@ export function Desk({
   const [notice, setNotice] = useState<string | null>(null)
   const didHydrateFiles = useRef(false)
   const confidenceDone = useRef(new Set<string>())
+  const writingRef = useRef<Record<string, true>>({})
 
   function openUpload() {
     document.getElementById('file')?.click()
   }
 
   const selected = athletes.find((row) => row.export.athlete.athlete_id === selectedId) ?? athletes[0]
+  const selectedKey = selected ? `${selected.export.athlete.athlete_id}/${filenameOf(selected)}` : ''
+  const selectedWriting = Boolean(selectedKey && writing[selectedKey])
+  const coachNote = selectedKey ? (coachNotes[selectedKey] ?? '') : ''
 
   async function hydrateFiles(base: CombineSession): Promise<CombineSession> {
     try {
@@ -243,16 +248,25 @@ export function Desk({
 
   async function generate() {
     if (!selected) return
-    setBusy(true)
+    const athleteId = selected.export.athlete.athlete_id
+    const filename = filenameOf(selected)
+    const key = `${athleteId}/${filename}`
+    if (writingRef.current[key]) return
+    const analysis = selected.analysis
+    const note = coachNotes[key] ?? ''
+    const coachName = session.coachName
+    const who = `${selected.export.athlete.name} (${selected.export.athlete.tested_on})`
+    writingRef.current = { ...writingRef.current, [key]: true }
+    setWriting(writingRef.current)
     setError(null)
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          analysis: selected.analysis,
-          coachName: session.coachName,
-          coachNote,
+          analysis,
+          coachName,
+          coachNote: note,
         }),
       })
       const body = (await response.json()) as {
@@ -261,14 +275,17 @@ export function Desk({
         error?: string
       }
       if (!response.ok || !body.draft) throw new Error(body.error || 'Generate failed')
-      const id = selected.export.athlete.athlete_id
       const draft = body.draft
       const meta = body.meta
-      onSession((prev) => setDraft(prev, id, draft, structuredClone(draft), meta))
+      onSession((prev) => setDraft(prev, athleteId, draft, structuredClone(draft), meta, filename))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Generate failed')
+      const message = err instanceof Error ? err.message : 'Generate failed'
+      setError(`${who}: ${message}`)
     } finally {
-      setBusy(false)
+      const next = { ...writingRef.current }
+      delete next[key]
+      writingRef.current = next
+      setWriting(next)
     }
   }
 
@@ -449,10 +466,13 @@ export function Desk({
             <AthletePane
               session={session}
               selected={selected}
-              busy={busy}
+              busy={selectedWriting}
               coachNote={coachNote}
               grokReady={grokReady}
-              onCoachNote={setCoachNote}
+              onCoachNote={(value) => {
+                if (!selectedKey) return
+                setCoachNotes((prev) => ({ ...prev, [selectedKey]: value }))
+              }}
               onGenerate={() => void generate()}
               onLetter={(letter) => onSession(setLetter(session, selected.export.athlete.athlete_id, letter))}
               onSign={() => void signSelected()}

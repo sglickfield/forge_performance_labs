@@ -165,6 +165,88 @@ describe('coach rating', () => {
     expect(activeRecord(back, 'FPL-0001')?.export.athlete.tested_on).toBe('2026-07-14')
   })
 
+  it('writes a redraft onto the combine that was on screen, even if another date is active later', () => {
+    const first = sessionWithLetter()
+    const later = parseAthleteExport({
+      athlete: {
+        name: 'Test Athlete',
+        athlete_id: 'FPL-0001',
+        age: 24,
+        sex: 'F',
+        sport: 'Volleyball',
+        tested_on: '2026-08-01',
+      },
+      administration: {
+        facility: 'Ridgeline Athletics',
+        administered_by: 'M. Sandoval',
+        conditions_note: '',
+      },
+      results: [{ subtest: 'sprint_40m', raw: 5.4, status: 'completed' }],
+    })
+    const withBoth = upsertExports(first, [
+      {
+        sourceName: 'FPL-0001/2026-08-01.json',
+        export: later,
+        files: [
+          { tested_on: '2026-07-14', filename: '2026-07-14.json' },
+          { tested_on: '2026-08-01', filename: '2026-08-01.json' },
+        ],
+      },
+    ])
+    const grokDraft = {
+      headline: 'Grok redraft for July',
+      overview: 'This letter belongs on the July combine.',
+      takeaways: [{ heading: 'Takeaway', body: 'July only.' }],
+      recommendations: [{ heading: 'Rec', body: 'Keep July.' }],
+      caveats: [],
+    }
+    const next = setDraft(
+      withBoth,
+      'FPL-0001',
+      grokDraft,
+      structuredClone(grokDraft),
+      {
+        source: 'grok',
+        model: 'grok-4.6',
+        promptVersion: 'forge-report-v4',
+        generatedAt: '2026-08-21T00:00:00.000Z',
+      },
+      '2026-07-14.json',
+    )
+    expect(next.athletes['FPL-0001']?.active).toBe('2026-08-01.json')
+    expect(next.athletes['FPL-0001']?.records['2026-07-14.json']?.letter?.headline).toBe(
+      'Grok redraft for July',
+    )
+    expect(next.athletes['FPL-0001']?.records['2026-08-01.json']?.letter?.headline).not.toBe(
+      'Grok redraft for July',
+    )
+
+    const augustDraft = {
+      ...grokDraft,
+      headline: 'Grok redraft for August',
+      overview: 'This letter belongs on the August combine.',
+    }
+    const both = setDraft(
+      next,
+      'FPL-0001',
+      augustDraft,
+      structuredClone(augustDraft),
+      {
+        source: 'grok',
+        model: 'grok-4.6',
+        promptVersion: 'forge-report-v4',
+        generatedAt: '2026-08-21T00:01:00.000Z',
+      },
+      '2026-08-01.json',
+    )
+    expect(both.athletes['FPL-0001']?.records['2026-07-14.json']?.letter?.headline).toBe(
+      'Grok redraft for July',
+    )
+    expect(both.athletes['FPL-0001']?.records['2026-08-01.json']?.letter?.headline).toBe(
+      'Grok redraft for August',
+    )
+  })
+
   it('drafts unsigned sheets when the week is seeded and leaves signed letters alone', () => {
     const exp = parseAthleteExport({
       athlete: {

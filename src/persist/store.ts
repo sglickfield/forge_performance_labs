@@ -42,24 +42,34 @@ function slotFromRecord(record: AthleteRecord, files?: CombineFile[]): AthleteSl
   }
 }
 
-function patchActive(
+function patchRecord(
   session: CombineSession,
   athleteId: string,
+  filename: string | undefined,
   fn: (record: AthleteRecord) => AthleteRecord,
 ): CombineSession {
   const slot = session.athletes[athleteId]
-  const record = slot?.records[slot.active]
-  if (!slot || !record) return session
+  const target = filename ?? slot?.active
+  const record = target ? slot?.records[target] : undefined
+  if (!slot || !target || !record) return session
   return {
     ...session,
     athletes: {
       ...session.athletes,
       [athleteId]: {
         ...slot,
-        records: { ...slot.records, [slot.active]: fn(record) },
+        records: { ...slot.records, [target]: fn(record) },
       },
     },
   }
+}
+
+function patchActive(
+  session: CombineSession,
+  athleteId: string,
+  fn: (record: AthleteRecord) => AthleteRecord,
+): CombineSession {
+  return patchRecord(session, athleteId, undefined, fn)
 }
 
 function reanalyze(session: CombineSession): CombineSession {
@@ -252,8 +262,9 @@ export function setDraft(
   draft: ReportDraft,
   letter: ReportDraft,
   meta: AthleteRecord['generateMeta'],
+  filename?: string,
 ): CombineSession {
-  return patchActive(session, athleteId, (record) => {
+  return patchRecord(session, athleteId, filename, (record) => {
     if (record.status === 'signed') return record
     return {
       ...record,
