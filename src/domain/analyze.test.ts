@@ -42,6 +42,26 @@ describe('analyzeAthlete', () => {
     expect(sprintFlag).toBeTruthy()
   })
 
+  it('does not treat a 0 N mid-thigh pull as a monitoring baseline', () => {
+    const exp = readExport('FPL-2455', '2026-07-15.json')
+    const zeroed = {
+      ...exp,
+      results: exp.results.map((row) =>
+        row.subtest === 'midthigh_pull_n' ? { ...row, raw: 0, status: 'completed' as const } : row,
+      ),
+    }
+    const analysis = analyzeAthlete(zeroed)
+    expect(analysis.midthigh).toBeUndefined()
+    expect(
+      analysis.flags.some((flag) => flag.kind === 'verify_outlier' && flag.subtest === 'midthigh_pull_n'),
+    ).toBe(true)
+    const draft = writeTemplateReport(analysis)
+    const recs = draft.recommendations.map((section) => section.body).join(' ')
+    expect(recs).not.toMatch(/0 N/)
+    expect(recs).toMatch(/hip hinge|strength/i)
+    expect(draft.caveats.join(' ')).toMatch(/not a recorded force/i)
+  })
+
   it('ranks mid-thigh pull inside the loaded combine', () => {
     const batch = [
       readExport('FPL-2429', '2026-07-16.json'),

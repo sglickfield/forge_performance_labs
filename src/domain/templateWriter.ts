@@ -1,3 +1,4 @@
+import { isRecordedPull } from './analyze.ts'
 import { formatRaw, firstName } from './format.ts'
 import { ratingLabel } from './bandLabels.ts'
 import type { Analysis, ReportDraft, ReportSection, TestView } from './types.ts'
@@ -121,7 +122,7 @@ function buildTakeaways(
     })
   }
 
-  if (analysis.midthigh) {
+  if (analysis.midthigh && isRecordedPull(analysis.midthigh.raw)) {
     out.push({
       heading: 'Isometric strength baseline established',
       body: `The mid-thigh pull of ${formatRaw(analysis.midthigh.raw, 'N')} provides a useful force-production reference for future testing. The 2019 handbook does not grade this test; tracking the number across blocks is the point. ${analysis.midthigh.of > 1 ? `Among this week's completed pulls it ranks ${analysis.midthigh.rank} of ${analysis.midthigh.of}.` : ''}`.trim(),
@@ -181,9 +182,10 @@ function buildRecommendations(
   } else {
     out.push({
       heading: 'Strength support',
-      body: analysis.midthigh
-        ? `Use the mid-thigh pull (${formatRaw(analysis.midthigh.raw, 'N')}) as a monitoring tool. A well-rounded lower-body strength program — hip hinge and single-leg patterns — will support force production and transfer to ${sport.includes('run') || sport.includes('sprint') || sport.includes('track') ? 'sprinting' : 'the field'}.`
-        : `A well-rounded lower-body strength program (hip hinge and single-leg patterns) will support force production on the next combine.`,
+      body:
+        analysis.midthigh && isRecordedPull(analysis.midthigh.raw)
+          ? `Use the mid-thigh pull (${formatRaw(analysis.midthigh.raw, 'N')}) as a monitoring tool. A well-rounded lower-body strength program — hip hinge and single-leg patterns — will support force production and transfer to ${sport.includes('run') || sport.includes('sprint') || sport.includes('track') ? 'sprinting' : 'the field'}.`
+          : `A well-rounded lower-body strength program (hip hinge and single-leg patterns) will support force production on the next combine.`,
     })
   }
 

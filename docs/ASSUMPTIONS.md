@@ -12,7 +12,7 @@ Exercise science is out of scope. These are the working rules so a coach (or a r
 
 - **40m sprint:** lower is better.
 - **Everything else with a range:** higher is better.
-- **Mid-thigh pull:** no handbook row. We do not invent a Newton range. We report the raw value and, when a combine is loaded, rank among completed pulls that week.
+- **Mid-thigh pull:** no handbook row. We do not invent a Newton typical range, in data or in code. A completed `0` is a blank trial, not a baseline. Any other recorded number is printed raw and ranked among this week’s pulls. The coach decides if it looks wrong.
 - Grip and balance handbook rows apply to either side. Left and right are scored separately against the same range, then compared to each other.
 
 ## Bands

@@ -20,6 +20,11 @@ const OUTLIER_PAD = 0.1
 const GRIP_ASYMMETRY = 0.1
 const BALANCE_ASYMMETRY = 0.15
 
+/** A recorded pull has to be an actual force. 0 N is a blank trial, not a baseline. */
+export function isRecordedPull(raw: number): boolean {
+  return Number.isFinite(raw) && raw > 0
+}
+
 function bandFor(test: {
   raw: number | null
   status: 'completed' | 'skipped'
@@ -159,11 +164,17 @@ export function analyzeAthlete(exp: AthleteExport, sessionPulls: number[] = []):
 
   const pull = tests.find((test) => test.subtest === 'midthigh_pull_n')
   let midthigh: Analysis['midthigh']
-  if (pull?.status === 'completed' && pull.raw !== null) {
-    const cohort = [...sessionPulls]
+  if (pull?.status === 'completed' && pull.raw !== null && isRecordedPull(pull.raw)) {
+    const cohort = sessionPulls.filter(isRecordedPull)
     if (!cohort.includes(pull.raw)) cohort.push(pull.raw)
     const desc = [...cohort].sort((a, b) => b - a)
     midthigh = { raw: pull.raw, rank: desc.indexOf(pull.raw) + 1, of: desc.length }
+  } else if (pull?.status === 'completed' && pull.raw !== null) {
+    flags.push({
+      kind: 'verify_outlier',
+      subtest: 'midthigh_pull_n',
+      text: `Mid-thigh pull (${formatRaw(pull.raw, 'N')}) is not a recorded force. Do not treat it as a strength baseline — confirm the logger and retest.`,
+    })
   }
 
   return {
@@ -180,7 +191,13 @@ export function analyzeAthlete(exp: AthleteExport, sessionPulls: number[] = []):
 export function sessionPullsFrom(exports: AthleteExport[]): number[] {
   return exports
     .flatMap((exp) => exp.results)
-    .filter((row) => row.subtest === 'midthigh_pull_n' && row.status === 'completed' && row.raw !== null)
+    .filter(
+      (row) =>
+        row.subtest === 'midthigh_pull_n' &&
+        row.status === 'completed' &&
+        row.raw !== null &&
+        isRecordedPull(row.raw),
+    )
     .map((row) => row.raw as number)
 }
 
